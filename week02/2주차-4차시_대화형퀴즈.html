@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>4차시 · 기능성식품의 물성 소재 · 대화형 퀴즈</title>
+<style>
+  :root{
+    --primary:#028090;
+    --primary-dark:#015E64;
+    --secondary:#00A896;
+    --accent:#02C39A;
+    --ink:#0B3B3C;
+    --sub:#5B7A7B;
+    --bg:#F5FBFA;
+    --card:#FFFFFF;
+    --tint:#E6F5F3;
+    --green:#4CAF7D;
+    --amber:#E3A73A;
+    --red:#E0644F;
+    --shadow: 0 4px 16px rgba(2,50,52,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", Roboto, sans-serif;
+    background: linear-gradient(180deg, var(--bg) 0%, #EAF6F4 100%);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app{
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 0 48px;
+    min-height: 100vh;
+  }
+  .topbar{
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    color: #fff;
+    padding: 28px 20px 26px;
+    border-radius: 0 0 22px 22px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .topbar::after{
+    content:"";
+    position:absolute;
+    top:-40px; right:-40px;
+    width:140px; height:140px;
+    border-radius:50%;
+    background: rgba(255,255,255,0.08);
+  }
+  .kicker{
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: #AFE9E1;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .topbar h1{
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.35;
+    position: relative;
+  }
+  .subtitle{
+    margin:0;
+    font-size: 13.5px;
+    color: #CFEFEC;
+    position: relative;
+  }
+  .statusbar{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    padding: 16px 20px 4px;
+  }
+  .progress-wrap{ flex:1; }
+  .progress-label{
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--sub);
+    margin-bottom: 6px;
+  }
+  .progress-label b{ color: var(--primary-dark); font-size:14px; }
+  .progress-track{
+    background: #DCEEEC;
+    border-radius: 999px;
+    height: 9px;
+    overflow: hidden;
+  }
+  .progress-fill{
+    height: 100%;
+    background: linear-gradient(90deg, var(--secondary), var(--accent));
+    width: 0%;
+    border-radius: 999px;
+    transition: width .35s ease;
+  }
+  .score-badge{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    background: #fff;
+    border: 2px solid var(--accent);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-weight: 800;
+    color: var(--primary-dark);
+    box-shadow: var(--shadow);
+    white-space: nowrap;
+    font-size: 14.5px;
+  }
+  .score-badge .score-icon{ font-size:16px; }
+
+  main{ padding: 14px 20px 0; }
+
+  .card{
+    background: var(--card);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 22px 20px;
+    margin-bottom: 16px;
+    animation: fadeUp .35s ease;
+  }
+  @keyframes fadeUp{
+    from{ opacity:0; transform: translateY(10px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+  .qmeta{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom: 12px;
+  }
+  .qnum{
+    font-weight: 800;
+    color: var(--primary);
+    font-size: 13.5px;
+  }
+  .difftag{
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 999px;
+    color: #fff;
+  }
+  .diff-하{ background: var(--green); }
+  .diff-중{ background: var(--amber); }
+  .diff-상{ background: var(--red); }
+  .typetag{
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--tint);
+    color: var(--primary-dark);
+  }
+  .qprompt{
+    font-size: 16.5px;
+    font-weight: 700;
+    line-height: 1.55;
+    margin: 0 0 18px;
+    color: var(--ink);
+  }
+  .options{ display:flex; flex-direction:column; gap:10px; }
+  .opt-btn{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    text-align:left;
+    padding: 13px 14px;
+    border-radius: 12px;
+    border: 2px solid #DCEEEC;
+    background: #fff;
+    font-size: 15px;
+    color: var(--ink);
+    cursor:pointer;
+    transition: all .15s ease;
+    font-family: inherit;
+  }
+  .opt-btn:hover:not(:disabled){ border-color: var(--secondary); background: var(--tint); }
+  .opt-btn:disabled{ cursor: default; }
+  .opt-label{
+    flex:none;
+    width: 26px; height:26px;
+    border-radius:50%;
+    background: var(--tint);
+    color: var(--primary-dark);
+    font-weight:800;
+    font-size:13px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .opt-btn.correct{ border-color: var(--green); background: #EAF7EF; }
+  .opt-btn.correct .opt-label{ background: var(--green); color:#fff; }
+  .opt-btn.wrong{ border-color: var(--red); background: #FCEEEC; }
+  .opt-btn.wrong .opt-label{ background: var(--red); color:#fff; }
+  .opt-btn.dim{ opacity: .55; }
+
+  .blank-row{ display:flex; gap:10px; margin-bottom: 4px; }
+  .blank-input{
+    flex:1;
+    padding: 13px 14px;
+    border-radius: 12px;
+    border: 2px solid #DCEEEC;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--ink);
+    background:#fff;
+  }
+  .blank-input:focus{ outline:none; border-color: var(--secondary); }
+  .btn{
+    border:none;
+    border-radius: 12px;
+    padding: 13px 18px;
+    font-weight: 800;
+    font-size: 14.5px;
+    cursor:pointer;
+    font-family: inherit;
+    transition: transform .1s ease, opacity .15s ease;
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn-primary{ background: var(--primary); color:#fff; }
+  .btn-primary:hover{ background: var(--primary-dark); }
+  .btn-outline{ background:#fff; color: var(--primary); border:2px solid var(--primary); }
+  .btn-block{ width:100%; margin-top: 14px; }
+  .btn:disabled{ opacity:.5; cursor:default; }
+
+  .reveal-box{
+    margin-top: 14px;
+    border-radius: 12px;
+    padding: 14px 15px;
+    background: var(--tint);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .reveal-box .ans-line{ font-weight:800; color: var(--primary-dark); margin-bottom:6px; }
+
+  .feedback{
+    margin-top: 14px;
+    border-radius: 12px;
+    padding: 14px 15px;
+    font-size: 14.5px;
+    line-height: 1.6;
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+  }
+  .feedback.ok{ background:#EAF7EF; color:#245C3C; }
+  .feedback.no{ background:#FCEEEC; color:#7A2E22; }
+  .feedback .fico{ font-size:20px; flex:none; }
+  .feedback .ftxt b{ display:block; margin-bottom:2px; font-size:14.5px; }
+
+  .selfgrade{ display:flex; gap:10px; margin-top: 12px; }
+  .selfgrade .btn{ flex:1; }
+  .btn-yes{ background: var(--green); color:#fff; }
+  .btn-no{ background: var(--red); color:#fff; }
+
+  .hidden{ display:none !important; }
+
+  .summary-card{
+    background: var(--card);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 26px 22px;
+    text-align:center;
+  }
+  .summary-emoji{ font-size: 46px; margin-bottom: 6px; }
+  .summary-title{ font-size:20px; font-weight:800; color: var(--primary-dark); margin: 0 0 4px; }
+  .summary-sub{ font-size:14px; color: var(--sub); margin:0 0 18px; }
+  .summary-stats{
+    display:flex;
+    justify-content:center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .stat-box{
+    background: var(--tint);
+    border-radius: 14px;
+    padding: 14px 18px;
+    min-width: 84px;
+  }
+  .stat-box .num{ font-size: 22px; font-weight:800; color: var(--primary-dark); }
+  .stat-box .lbl{ font-size: 12px; color: var(--sub); font-weight:700; margin-top:2px; }
+
+  .review-list{ text-align:left; margin: 18px 0; }
+  .review-item{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid #EDF6F5;
+    font-size: 13.5px;
+  }
+  .review-item:last-child{ border-bottom:none; }
+  .review-ico{ flex:none; font-size:16px; }
+  .review-txt{ color: var(--ink); line-height:1.5; }
+  .review-txt .qn{ font-weight:800; color: var(--sub); font-size:12px; display:block; margin-bottom:2px;}
+
+  .summary-actions{ display:flex; flex-direction:column; gap: 10px; margin-top: 6px; }
+
+  footer.appfoot{
+    text-align:center;
+    color: var(--sub);
+    font-size: 12px;
+    padding: 22px 20px 0;
+  }
+
+  @media (max-width: 380px){
+    .topbar h1{ font-size: 19px; }
+    .qprompt{ font-size: 15.5px; }
+    .card{ padding: 18px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="kicker">제품 및 소재 물성 실습 · 형성평가</div>
+    <h1>4차시 · 기능성식품의 물성 소재</h1>
+    <p class="subtitle">생리활성 성분과 물성조절 소재의 이해 — 형성평가 10문항</p>
+  </header>
+
+  <div class="statusbar">
+    <div class="progress-wrap">
+      <div class="progress-label"><span id="modeLabel">문항</span> <b id="qIndex">1</b> / <span id="qTotal">10</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="score-badge">
+      <span class="score-icon">⭐</span><span id="scoreValue">0</span><span>점</span>
+    </div>
+  </div>
+
+  <main id="quizArea"></main>
+  <div id="summaryArea"></div>
+
+  <footer class="appfoot">© 유한생명바이오학과 · 제품 및 소재 물성 실습</footer>
+</div>
+
+<script>
+const QUESTIONS = [{"id":1,"type":"mc","difficulty":"하","prompt":"물성조절 소재(부형제)의 역할로 가장 적절한 것은?","options":["효능을 직접 나타낸다","형태·질감을 만들고 유지한다","원료의 안전성을 검증한다","제품의 가격을 결정한다"],"answerIndex":1,"explanation":"물성조절 소재는 점도·질감·안정성 등 제품의 물리적 형태를 만들고 유지합니다."},{"id":2,"type":"blank","difficulty":"중","prompt":"제품 개발 프로세스는 소재선정 → 효능평가 → ( 　　 ) → 품질관리 순으로 진행된다.","answerText":"제형화","explanation":"4단계 프로세스의 3단계는 제형화(최적 배합비 및 공정 설계)입니다."},{"id":3,"type":"mc","difficulty":"상","prompt":"생리활성 성분과 물성조절 소재의 관계를 가장 잘 설명한 것은?","options":["물성조절 소재가 효능을 내고 생리활성 성분이 형태를 유지한다","둘은 서로 대체 가능하며 구분할 필요가 없다","생리활성 성분이 효과를 내고 물성조절 소재가 그 효과를 안정적으로 담는 역할을 한다","생리활성 성분은 반드시 물성조절 소재와 동일한 성분이어야 한다"],"answerIndex":2,"explanation":"생리활성 성분이 효과를 내고, 물성조절 소재가 그 효과를 안정적으로 담아내는 '그릇' 역할을 합니다."},{"id":4,"type":"blank","difficulty":"하","prompt":"유산균, 오메가-3, 히알루론산과 같이 장 건강·항산화 등 실제 건강 기능을 나타내는 성분을 ( 　　 ) 성분이라고 한다.","answerText":"생리활성","explanation":"생리활성 성분은 실제 건강 기능을 나타내는 성분을 말합니다."},{"id":5,"type":"mc","difficulty":"중","prompt":"다음 중 '혈행개선/콜레스테롤' 분류의 대표 소재로 옳은 것은?","options":["유산균","오메가-3, 홍국","아연, 베타글루칸","히알루론산, 콜라겐"],"answerIndex":1,"explanation":"혈행개선/콜레스테롤 분류의 대표 소재는 오메가-3, 홍국입니다."},{"id":6,"type":"mc","difficulty":"상","prompt":"다음 중 유화 안정제(Emulsifier)에 해당하는 소재는?","options":["구아검","레시틴","아가","말토덱스트린"],"answerIndex":1,"explanation":"유화 안정제에는 레시틴, 폴리소르베이트, 소르비탄 에스테르가 해당합니다."},{"id":7,"type":"blank","difficulty":"중","prompt":"아가, 젤란검, 알지네이트는 식물성 겔화·고온 안정성 등의 특징을 가진 ( 　　 )로 분류된다.","answerText":"겔화제","explanation":"아가·젤란검·알지네이트는 겔화제(Gelling Agent)로 분류됩니다."},{"id":8,"type":"mc","difficulty":"하","prompt":"기능성식품의 물성·점도 품질관리와 관련된 기준으로 옳은 것은?","options":["대한약전","화장품 기준 및 시험방법","건강기능식품의 기준 및 규격","의약품 품질심사 가이드라인"],"answerIndex":2,"explanation":"기능성식품의 물성 관리 기준은 「건강기능식품의 기준 및 규격」입니다."},{"id":9,"type":"blank","difficulty":"중","prompt":"기능성식품 물성 품질관리 항목 중, 겔류는 기준 ( 　　 ) 범위 내 유지가 필요하다. (예: 500~3,000 cP)","answerText":"점도","explanation":"겔류는 기준 점도 범위 내 유지가 필요합니다."},{"id":10,"type":"mc","difficulty":"상","prompt":"기능성식품 물성 품질관리의 시험 방법으로 옳지 않은 것은?","options":["점도계(Brookfield)","유동성 측정기","현탁성 관찰","정제경도계"],"answerIndex":3,"explanation":"정제경도계는 의약품 정제의 측정기기입니다. 기능성식품은 점도계·유동성측정기·현탁성관찰 등을 사용합니다."}];
+
+const state = {
+  order: [],
+  idx: 0,
+  score: 0,
+  mode: 'first',   // 'first' | 'retry'
+  answered: false,
+  wrongIds: [],
+  resultsById: {}  // qId -> {correct:bool}
+};
+
+const quizArea = document.getElementById('quizArea');
+const summaryArea = document.getElementById('summaryArea');
+const progressFill = document.getElementById('progressFill');
+const qIndexEl = document.getElementById('qIndex');
+const qTotalEl = document.getElementById('qTotal');
+const modeLabelEl = document.getElementById('modeLabel');
+const scoreValueEl = document.getElementById('scoreValue');
+
+function optLabel(i){ return ['①','②','③','④'][i]; }
+
+function startAll(){
+  state.order = QUESTIONS.map((q,i)=>i);
+  state.idx = 0;
+  state.score = 0;
+  state.mode = 'first';
+  state.wrongIds = [];
+  state.resultsById = {};
+  updateScore();
+  summaryArea.classList.add('hidden');
+  quizArea.classList.remove('hidden');
+  renderQuestion();
+}
+
+function updateScore(){ scoreValueEl.textContent = state.score; }
+
+function updateProgress(){
+  const total = state.order.length;
+  qIndexEl.textContent = state.idx + 1;
+  qTotalEl.textContent = total;
+  modeLabelEl.textContent = state.mode === 'first' ? '문항' : '다시풀기';
+  const pct = total ? Math.round(((state.idx) / total) * 100) : 0;
+  progressFill.style.width = pct + '%';
+}
+
+function renderQuestion(){
+  state.answered = false;
+  updateProgress();
+  const q = QUESTIONS[state.order[state.idx]];
+  let html = '';
+  html += '<div class="card" id="qcard">';
+  html += '  <div class="qmeta">';
+  html += '    <span class="qnum">Q' + (state.idx+1) + '</span>';
+  html += '    <span class="difftag diff-' + q.difficulty + '">난이도 ' + q.difficulty + '</span>';
+  html += '    <span class="typetag">' + (q.type==='mc' ? '객관식' : '괄호넣기') + '</span>';
+  html += '  </div>';
+  html += '  <p class="qprompt">' + q.prompt + '</p>';
+
+  if(q.type === 'mc'){
+    html += '  <div class="options" id="optionsWrap">';
+    q.options.forEach((opt, i)=>{
+      html += '<button class="opt-btn" data-i="'+i+'" onclick="selectOption('+i+')">' +
+              '<span class="opt-label">'+optLabel(i)+'</span><span>'+opt+'</span></button>';
+    });
+    html += '  </div>';
+  } else {
+    html += '  <div class="blank-row">';
+    html += '    <input type="text" id="blankInput" class="blank-input" placeholder="정답을 입력하세요" autocomplete="off">';
+    html += '    <button class="btn btn-primary" onclick="checkBlank()">확인</button>';
+    html += '  </div>';
+  }
+
+  html += '  <div id="feedbackWrap"></div>';
+  html += '</div>';
+  quizArea.innerHTML = html;
+}
+
+function finalizeAnswer(qId, correct){
+  const points = state.mode === 'first' ? 10 : 5;
+  if(correct){ state.score += points; updateScore(); }
+  state.resultsById[qId] = { correct: correct };
+  if(!correct && state.wrongIds.indexOf(qId) === -1){ state.wrongIds.push(qId); }
+  state.answered = true;
+}
+
+function selectOption(i){
+  if(state.answered) return;
+  const q = QUESTIONS[state.order[state.idx]];
+  const correct = (i === q.answerIndex);
+  const buttons = document.querySelectorAll('#optionsWrap .opt-btn');
+  buttons.forEach((b, bi)=>{
+    b.disabled = true;
+    if(bi === q.answerIndex) b.classList.add('correct');
+    if(bi === i && !correct) b.classList.add('wrong');
+    if(bi !== i && bi !== q.answerIndex) b.classList.add('dim');
+  });
+  finalizeAnswer(q.id, correct);
+  showFeedback(correct, q.explanation);
+}
+
+function checkBlank(){
+  if(state.answered) return;
+  const q = QUESTIONS[state.order[state.idx]];
+  const input = document.getElementById('blankInput');
+  input.disabled = true;
+  const wrap = document.getElementById('feedbackWrap');
+  let html = '<div class="reveal-box">';
+  html += '<div class="ans-line">모범 답안: ' + q.answerText + '</div>';
+  html += q.explanation;
+  html += '</div>';
+  html += '<div class="selfgrade">';
+  html += '<button class="btn btn-yes" onclick="selfGrade(true)">✅ 제가 맞았어요</button>';
+  html += '<button class="btn btn-no" onclick="selfGrade(false)">❌ 틀렸어요</button>';
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function selfGrade(correct){
+  const q = QUESTIONS[state.order[state.idx]];
+  finalizeAnswer(q.id, correct);
+  document.querySelector('.selfgrade').innerHTML =
+    '<div style="flex:1;text-align:center;font-weight:800;color:' + (correct ? '#245C3C' : '#7A2E22') + ';padding:10px 0;">' +
+    (correct ? '정답 처리되었습니다 🎉' : '다음에는 맞힐 수 있어요 💪') + '</div>';
+  showNextButton();
+}
+
+function showFeedback(correct, explanation){
+  const wrap = document.getElementById('feedbackWrap');
+  const cls = correct ? 'ok' : 'no';
+  const icon = correct ? '✅' : '❌';
+  const head = correct ? '정답입니다!' : '아쉬워요, 오답입니다.';
+  wrap.innerHTML =
+    '<div class="feedback ' + cls + '"><span class="fico">' + icon + '</span>' +
+    '<span class="ftxt"><b>' + head + '</b>' + explanation + '</span></div>';
+  showNextButton();
+}
+
+function showNextButton(){
+  const card = document.getElementById('qcard');
+  const isLast = state.idx === state.order.length - 1;
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-primary btn-block';
+  btn.textContent = isLast ? '결과 보기' : '다음 문항 →';
+  btn.onclick = goNext;
+  card.appendChild(btn);
+}
+
+function goNext(){
+  if(state.idx < state.order.length - 1){
+    state.idx++;
+    renderQuestion();
+    window.scrollTo({top:0, behavior:'smooth'});
+  } else {
+    updateProgress();
+    progressFill.style.width = '100%';
+    showSummary();
+  }
+}
+
+function showSummary(){
+  quizArea.classList.add('hidden');
+  summaryArea.classList.remove('hidden');
+
+  const total = state.order.length;
+  let correctCount = 0;
+  state.order.forEach(qid_i=>{
+    const q = QUESTIONS[qid_i];
+    if(state.resultsById[q.id] && state.resultsById[q.id].correct) correctCount++;
+  });
+  const pct = Math.round((correctCount/total)*100);
+
+  let emoji = '🌱';
+  let msg = '조금만 더 복습해봐요!';
+  if(pct === 100){ emoji='🏆'; msg='완벽해요! 모든 문항을 맞혔습니다.'; }
+  else if(pct >= 80){ emoji='🎉'; msg='아주 잘했어요!'; }
+  else if(pct >= 60){ emoji='👍'; msg='좋아요, 조금만 더 힘내봐요!'; }
+
+  let html = '<div class="summary-card">';
+  html += '<div class="summary-emoji">'+emoji+'</div>';
+  html += '<h2 class="summary-title">'+ (state.mode==='first' ? '형성평가 완료!' : '다시풀기 완료!') +'</h2>';
+  html += '<p class="summary-sub">'+msg+'</p>';
+  html += '<div class="summary-stats">';
+  html += '  <div class="stat-box"><div class="num">'+correctCount+'/'+total+'</div><div class="lbl">정답 수</div></div>';
+  html += '  <div class="stat-box"><div class="num">'+pct+'%</div><div class="lbl">정답률</div></div>';
+  html += '  <div class="stat-box"><div class="num">'+state.score+'</div><div class="lbl">누적 점수</div></div>';
+  html += '</div>';
+
+  html += '<div class="review-list">';
+  state.order.forEach((qidx, i)=>{
+    const q = QUESTIONS[qidx];
+    const r = state.resultsById[q.id];
+    const ok = r && r.correct;
+    html += '<div class="review-item"><span class="review-ico">'+(ok?'✅':'❌')+'</span>' +
+            '<span class="review-txt"><span class="qn">Q'+(i+1)+' · 난이도 '+q.difficulty+'</span>'+q.prompt+'</span></div>';
+  });
+  html += '</div>';
+
+  html += '<div class="summary-actions">';
+  if(state.wrongIds.length > 0){
+    html += '<button class="btn btn-primary" onclick="startRetry()">🔁 틀린 문항만 다시 풀기 ('+state.wrongIds.length+'문항)</button>';
+  }
+  html += '<button class="btn btn-outline" onclick="startAll()">처음부터 다시 풀기</button>';
+  html += '</div>';
+  html += '</div>';
+
+  summaryArea.innerHTML = html;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function startRetry(){
+  const idsToRetry = state.wrongIds.slice();
+  state.order = QUESTIONS
+    .map((q,i)=>i)
+    .filter(i => idsToRetry.indexOf(QUESTIONS[i].id) !== -1);
+  state.idx = 0;
+  state.mode = 'retry';
+  state.wrongIds = [];
+  summaryArea.classList.add('hidden');
+  quizArea.classList.remove('hidden');
+  renderQuestion();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// init
+startAll();
+</script>
+</body>
+</html>
