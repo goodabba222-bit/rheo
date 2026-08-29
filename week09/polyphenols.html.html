@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>폴리페놀 &amp; 플라보노이드 퀴즈</title>
+<style>
+  :root{
+    --bg:#FAFCF6;
+    --surface:#FFFFFF;
+    --primary:#1F4C2C;
+    --primary-dim:#2C5F2D;
+    --primary-soft:#E7F0DF;
+    --secondary:#6E9A54;
+    --accent:#D98C3D;
+    --accent-soft:#FBF0E1;
+    --danger:#C1443C;
+    --danger-soft:#FBEAE8;
+    --text:#20301F;
+    --text-muted:#63715F;
+    --border:#E3ECDD;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:9px;
+    --shadow:0 10px 30px -12px rgba(31,76,44,0.18);
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(1100px 480px at 50% -120px, #EEF6E5 0%, var(--bg) 62%);
+    color:var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic",
+      "Noto Sans KR", "Segoe UI", system-ui, sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding: clamp(14px, 4vw, 40px) clamp(12px, 4vw, 20px) 60px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .app{ width:100%; max-width:560px; }
+
+  /* ---------- Header ---------- */
+  header{ text-align:center; margin-bottom: 22px; }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12.5px; font-weight:700; letter-spacing:.14em;
+    color:var(--primary); background:var(--primary-soft);
+    padding:5px 12px; border-radius:999px; margin-bottom:12px;
+  }
+  .eyebrow svg{ width:13px; height:13px; }
+  h1{
+    margin:0 0 6px;
+    font-size:clamp(24px, 6vw, 30px);
+    font-weight:800;
+    letter-spacing:-0.01em;
+    color:var(--primary);
+  }
+  .subtitle{ margin:0; color:var(--text-muted); font-size:14.5px; }
+
+  /* ---------- Status bar (progress + score) ---------- */
+  .statusbar{
+    display:flex; align-items:center; gap:12px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-md); padding:14px 16px;
+    margin-bottom:16px; box-shadow:var(--shadow);
+  }
+  .progress-wrap{ flex:1; min-width:0; }
+  .progress-labels{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:12.5px; color:var(--text-muted); margin-bottom:7px; font-weight:600;
+  }
+  .progress-labels b{ color:var(--primary); font-size:13.5px; }
+  .progress-track{
+    position:relative; height:8px; background:var(--primary-soft);
+    border-radius:999px; overflow:hidden;
+  }
+  .progress-fill{
+    position:absolute; inset:0 auto 0 0; width:0%;
+    background:linear-gradient(90deg, var(--secondary), var(--primary));
+    border-radius:999px; transition:width .45s cubic-bezier(.4,0,.2,1);
+  }
+  .dots{ display:flex; gap:4px; margin-top:9px; }
+  .dot{
+    flex:1; height:5px; border-radius:999px; background:var(--border);
+    transition: background .3s;
+  }
+  .dot.current{ background:var(--accent); }
+  .dot.correct{ background:var(--primary); }
+  .dot.wrong{ background:var(--danger); }
+
+  .score-pill{
+    flex-shrink:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:2px;
+    background:var(--primary); color:#fff;
+    border-radius:14px; padding:9px 14px; min-width:74px;
+    position:relative; overflow:hidden;
+  }
+  .score-pill .hex{ width:16px; height:16px; margin-bottom:1px; }
+  .score-pill .num{ font-size:19px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; }
+  .score-pill .lbl{ font-size:9.5px; letter-spacing:.06em; opacity:.85; }
+  .score-pill.bump{ animation: bump .5s ease; }
+  @keyframes bump{
+    0%{ transform:scale(1); }
+    35%{ transform:scale(1.12); background:var(--secondary); }
+    100%{ transform:scale(1); }
+  }
+
+  /* ---------- Quiz card ---------- */
+  .card{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:22px 20px 20px;
+    box-shadow:var(--shadow);
+    animation: fadein .35s ease;
+  }
+  @keyframes fadein{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none; } }
+
+  .meta-row{ display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .badge{
+    font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px;
+    letter-spacing:.02em;
+  }
+  .badge.type{ background:var(--accent-soft); color:var(--accent); }
+  .badge.diff{ background:var(--primary-soft); color:var(--primary); }
+  .badge.diff.mid{ background:#FDF4E3; color:#B4791F; }
+  .badge.diff.hi{ background:var(--danger-soft); color:var(--danger); }
+
+  .stem{
+    font-size:17.5px; font-weight:700; color:var(--text);
+    margin:0 0 16px; line-height:1.5;
+  }
+
+  /* options (multiple choice) */
+  .options{ display:flex; flex-direction:column; gap:9px; }
+  .opt{
+    display:flex; align-items:center; gap:11px;
+    text-align:left; width:100%;
+    background:#fff; border:1.5px solid var(--border);
+    border-radius:var(--radius-sm); padding:12px 14px;
+    font-size:15px; color:var(--text); cursor:pointer;
+    font-family:inherit; transition: border-color .15s, background .15s, transform .1s;
+  }
+  .opt:active{ transform:scale(.99); }
+  .opt .num{
+    flex-shrink:0; width:24px; height:24px; border-radius:50%;
+    background:var(--primary-soft); color:var(--primary);
+    font-size:12.5px; font-weight:800; display:flex; align-items:center; justify-content:center;
+  }
+  .opt:hover:not(.locked){ border-color:var(--secondary); background:#F7FBF3; }
+  .opt.locked{ cursor:default; }
+  .opt.selected-correct{ border-color:var(--primary); background:var(--primary-soft); }
+  .opt.selected-correct .num{ background:var(--primary); color:#fff; }
+  .opt.selected-wrong{ border-color:var(--danger); background:var(--danger-soft); }
+  .opt.selected-wrong .num{ background:var(--danger); color:#fff; }
+  .opt.reveal-correct{ border-color:var(--primary); background:var(--primary-soft); }
+  .opt.dim{ opacity:.55; }
+  .opt .mark{ margin-left:auto; font-size:16px; font-weight:800; flex-shrink:0; }
+
+  /* fill-in-blank */
+  .blank-form{ display:flex; gap:8px; }
+  .blank-input{
+    flex:1; min-width:0; font-size:16px; font-family:inherit;
+    padding:12px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm);
+    background:#fff; color:var(--text);
+  }
+  .blank-input:focus{ outline:none; border-color:var(--secondary); }
+  .blank-input:disabled{ background:#F5F7F2; color:var(--text-muted); }
+  .btn{
+    border:none; border-radius:var(--radius-sm); font-family:inherit;
+    font-weight:700; font-size:15px; cursor:pointer; padding:12px 18px;
+    transition: filter .15s, transform .1s;
+  }
+  .btn:active{ transform:scale(.98); }
+  .btn-primary{ background:var(--primary); color:#fff; }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-primary:disabled{ background:#C9D6C1; cursor:default; }
+  .btn-outline{
+    background:#fff; color:var(--primary); border:1.5px solid var(--primary);
+  }
+  .btn-outline:hover{ background:var(--primary-soft); }
+  .btn-accent{ background:var(--accent); color:#fff; }
+  .btn-accent:hover{ filter:brightness(1.06); }
+  .btn-block{ width:100%; }
+
+  /* feedback */
+  .feedback{
+    margin-top:14px; padding:13px 14px; border-radius:var(--radius-sm);
+    font-size:14.5px; display:none; gap:9px; align-items:flex-start;
+    animation: fadein .3s ease;
+  }
+  .feedback.show{ display:flex; }
+  .feedback.correct{ background:var(--primary-soft); color:var(--primary-dim); }
+  .feedback.wrong{ background:var(--danger-soft); color:#8C2E27; }
+  .feedback .fmark{ font-size:17px; line-height:1.3; flex-shrink:0; }
+  .feedback b{ display:block; margin-bottom:2px; }
+  .feedback .answer-line{ margin-top:4px; font-weight:700; }
+
+  .next-row{ margin-top:16px; }
+
+  /* ---------- Summary ---------- */
+  .summary{ display:none; }
+  .summary.show{ display:block; }
+  .summary-hero{
+    text-align:center; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:30px 22px 24px; box-shadow:var(--shadow);
+  }
+  .summary-hex{ width:56px; height:56px; margin:0 auto 12px; }
+  .summary-hero .big{
+    font-size:15px; font-weight:700; color:var(--text-muted); margin-bottom:4px;
+  }
+  .summary-hero .score{
+    font-size:44px; font-weight:800; color:var(--primary); line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .summary-hero .score span{ font-size:20px; color:var(--text-muted); font-weight:700; }
+  .summary-tier{
+    display:inline-block; margin-top:12px; padding:6px 14px; border-radius:999px;
+    font-size:13.5px; font-weight:700;
+  }
+  .tier-a{ background:var(--primary-soft); color:var(--primary); }
+  .tier-b{ background:var(--accent-soft); color:var(--accent); }
+  .tier-c{ background:var(--danger-soft); color:var(--danger); }
+
+  .wrong-list{
+    margin-top:20px; text-align:left; background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:18px 18px 8px; box-shadow:var(--shadow);
+  }
+  .wrong-list h3{ margin:0 0 10px; font-size:14.5px; color:var(--text); }
+  .wrong-item{
+    display:flex; align-items:flex-start; gap:9px;
+    padding:9px 0; border-top:1px solid var(--border); font-size:13.5px;
+  }
+  .wrong-item:first-of-type{ border-top:none; }
+  .wrong-item .qn{
+    flex-shrink:0; width:22px; height:22px; border-radius:50%;
+    background:var(--danger-soft); color:var(--danger); font-weight:800; font-size:11.5px;
+    display:flex; align-items:center; justify-content:center; margin-top:1px;
+  }
+  .wrong-item .qtext{ color:var(--text-muted); }
+
+  .summary-actions{ display:flex; flex-direction:column; gap:10px; margin-top:18px; }
+
+  footer.note{
+    text-align:center; font-size:12px; color:var(--text-muted); margin-top:22px;
+  }
+
+  @media (min-width:480px){
+    .summary-actions{ flex-direction:row; }
+    .summary-actions .btn{ flex:1; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <span class="eyebrow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 21 7v10l-9 5-9-5V7z"/></svg>
+      10~11주차 · 사전이론 형성평가
+    </span>
+    <h1>폴리페놀 &amp; 플라보노이드 퀴즈</h1>
+    <p class="subtitle">항산화 성분의 정의·구조·측정원리, 10문항으로 점검해봅시다</p>
+  </header>
+
+  <div class="statusbar">
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span id="progressText">문항 1 / 10</span>
+        <b id="progressPct">0%</b>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="score-pill" id="scorePill">
+      <svg class="hex" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2 21 7v10l-9 5-9-5V7z"/></svg>
+      <div class="num" id="scoreNum">0</div>
+      <div class="lbl">POINT</div>
+    </div>
+  </div>
+
+  <main class="card" id="quizCard"></main>
+
+  <section class="summary" id="summary"></section>
+
+  <footer class="note">제품 및 소재 물성 실습 · 폴리페놀 및 플라보노이드 형성평가 (자기 채점용)</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- Question data ----------------
+  const QUESTIONS = [
+    {
+      id:0, type:"mc", difficulty:"하",
+      stem:"폴리페놀의 기본 구조에 대한 설명으로 옳은 것은?",
+      options:[
+        "벤젠고리에 수산기(–OH)가 2개 이상 붙은 화합물",
+        "케톤기를 포함하는 지방족 화합물",
+        "단백질과 결합한 당(糖) 화합물",
+        "벤젠고리에 수산기(–OH)가 1개만 붙은 화합물"
+      ],
+      answer:0,
+      explain:"폴리페놀은 분자 내 페놀기(–OH가 붙은 벤젠고리)를 2개 이상 포함하는 방향족 알코올 화합물이에요."
+    },
+    {
+      id:1, type:"blank", difficulty:"하",
+      stem:"폴리페놀은 식물의 색·향·쓴맛, 그리고 미생물 저항·곤충 유인과 같은 (　) 기능에 관여한다.",
+      accepted:["방어","방어기능"],
+      displayAnswer:"방어(기능)",
+      explain:"폴리페놀은 식물의 방어기능(미생물 감염 저항, 곤충 유인 등)에 관여해요."
+    },
+    {
+      id:2, type:"mc", difficulty:"중",
+      stem:"다음 중 폴리페놀의 하위 분류에 해당하지 않는 것은?",
+      options:["스틸벤류","페놀산류","스테로이드류","플라보노이드"],
+      answer:2,
+      explain:"폴리페놀의 하위분류는 플라보노이드·페놀산류·스틸벤류·리그난류·탄닌류이며, 스테로이드류는 포함되지 않아요."
+    },
+    {
+      id:3, type:"blank", difficulty:"중",
+      stem:"폴리페놀이 뛰어난 라디칼 소거능을 갖는 이유는 방향족 고리와 (　)의 조합 때문이다.",
+      accepted:["수산기","oh","-oh","하이드록시기","하이드록실기"],
+      displayAnswer:"수산기(–OH)",
+      explain:"방향족 고리에 결합된 –OH가 활성산소·자유라디칼에 전자를 내주어 중화시키는 원리예요."
+    },
+    {
+      id:4, type:"mc", difficulty:"하",
+      stem:"플라보노이드의 기본 골격 구조로 옳은 것은?",
+      options:["C3-C3-C3","C6-C1-C6","C6-C6-C6","C6-C3-C6"],
+      answer:3,
+      explain:"플라보노이드는 벤젠고리 2개(C6) 사이에 산소 포함 헤테로고리(C3)가 연결된 C6-C3-C6 구조를 가져요."
+    },
+    {
+      id:5, type:"blank", difficulty:"중",
+      stem:"플라보노이드는 폴리페놀 계열 중 가장 대표적인 (　)그룹이다.",
+      accepted:["하위","하위그룹"],
+      displayAnswer:"하위(그룹)",
+      explain:"플라보노이드는 폴리페놀의 여러 하위분류 중 가장 큰 그룹으로, '폴리페놀 ⊃ 플라보노이드' 관계예요."
+    },
+    {
+      id:6, type:"mc", difficulty:"중",
+      stem:"다음 중 플라보노이드의 하위그룹과 대표 성분의 연결이 잘못된 것은?",
+      options:["카테킨류 - 레스베라트롤","플라보놀 - 퀘르세틴","이소플라본 - 제니스테인","안토시아닌 - 델피니딘"],
+      answer:0,
+      explain:"레스베라트롤은 스틸벤류의 대표 성분이고, 카테킨류의 대표 성분은 EGCG·(+)-카테킨 등이에요."
+    },
+    {
+      id:7, type:"mc", difficulty:"상",
+      stem:"폴리페놀과 플라보노이드에 대한 설명으로 옳지 않은 것은?",
+      options:[
+        "두 물질 모두 항산화 작용을 공통적으로 갖는다",
+        "폴리페놀과 플라보노이드는 서로 다른 별개의 독립적 화합물군이다",
+        "플라보노이드는 폴리페놀의 하위분류이다",
+        "폴리페놀은 페놀산, 리그난, 탄닌 등 다양한 구조를 포함한다"
+      ],
+      answer:1,
+      explain:"플라보노이드는 폴리페놀에 포함되는 하위그룹이므로, 완전히 별개의 독립적 화합물군이라는 설명은 옳지 않아요."
+    },
+    {
+      id:8, type:"blank", difficulty:"상",
+      stem:"천연물 추출물의 폴리페놀 총량은 갈산(Gallic acid)을 표준물질로 하는 (　)법으로 측정한다.",
+      accepted:["folin-ciocalteu","folinciocalteu","folin ciocalteu"],
+      displayAnswer:"Folin-Ciocalteu(법)",
+      explain:"폴리페놀 총량 측정의 표준 정량법은 Folin-Ciocalteu법이며, 갈산 기준 검량선을 사용해요. (DPPH법은 항산화력 측정법이니 헷갈리지 마세요!)"
+    },
+    {
+      id:9, type:"mc", difficulty:"상",
+      stem:"폴리페놀·플라보노이드 함량 측정이 실험적으로 중요한 이유로 가장 거리가 먼 것은?",
+      options:[
+        "기능성 원료의 품질 평가지표로 사용",
+        "시료의 점도 및 유변학적 특성을 파악하기 위해",
+        "유효성분 표준화 및 품질관리 기준 설정에 활용",
+        "항산화 활성과의 상관관계 연구자료로 활용"
+      ],
+      answer:1,
+      explain:"점도·유변학적 특성 평가는 브룩필드 점도계를 이용한 물성평가 영역(3~4주차 실습)으로, 함량측정의 중요성과는 직접 관련이 없어요."
+    }
+  ];
+
+  const POINTS_PER_Q = 10;
+
+  // ---------------- State ----------------
+  const state = {
+    queue: QUESTIONS.map(q => q.id),   // ids in play for the current run
+    pos: 0,                            // index within queue
+    correct: new Set(),                // ids answered correctly at any point
+    wrong: new Set(),                  // ids currently marked wrong (not yet redeemed)
+    mode: "all",                       // "all" | "review"
+    answeredThisQ: false
+  };
+
+  function byId(id){ return QUESTIONS.find(q => q.id === id); }
+  function normalize(str){
+    return String(str).toLowerCase().trim()
+      .replace(/[\s\-\(\)–—·,.]/g, "");
+  }
+
+  // ---------------- Elements ----------------
+  const quizCard = document.getElementById("quizCard");
+  const summary = document.getElementById("summary");
+  const progressText = document.getElementById("progressText");
+  const progressPct = document.getElementById("progressPct");
+  const progressFill = document.getElementById("progressFill");
+  const dotsWrap = document.getElementById("dots");
+  const scoreNum = document.getElementById("scoreNum");
+  const scorePill = document.getElementById("scorePill");
+
+  // ---------------- Render: status bar ----------------
+  function renderStatus(){
+    const total = state.queue.length;
+    const pos = Math.min(state.pos, total - 1);
+    const label = state.mode === "review" ? "복습" : "문항";
+    progressText.textContent = `${label} ${Math.min(state.pos+1,total)} / ${total}`;
+    const pct = Math.round((state.pos / total) * 100);
+    progressPct.textContent = pct + "%";
+    progressFill.style.width = pct + "%";
+
+    dotsWrap.innerHTML = "";
+    state.queue.forEach((qid, i) => {
+      const d = document.createElement("div");
+      d.className = "dot";
+      if (i === state.pos) d.classList.add("current");
+      else if (state.correct.has(qid)) d.classList.add("correct");
+      else if (state.wrong.has(qid)) d.classList.add("wrong");
+      dotsWrap.appendChild(d);
+    });
+
+    scoreNum.textContent = state.correct.size * POINTS_PER_Q;
+  }
+
+  function bumpScore(){
+    scorePill.classList.remove("bump");
+    void scorePill.offsetWidth;
+    scorePill.classList.add("bump");
+  }
+
+  // ---------------- Render: question ----------------
+  function diffBadgeClass(d){
+    if (d === "중") return "badge diff mid";
+    if (d === "상") return "badge diff hi";
+    return "badge diff";
+  }
+
+  function renderQuestion(){
+    quizCard.style.display = "";
+    summary.classList.remove("show");
+    state.answeredThisQ = false;
+
+    const qid = state.queue[state.pos];
+    const q = byId(qid);
+    const typeLabel = q.type === "mc" ? "객관식" : "괄호넣기";
+
+    quizCard.innerHTML = `
+      <div class="meta-row">
+        <span class="badge type">${typeLabel}</span>
+        <span class="${diffBadgeClass(q.difficulty)}">난이도 ${q.difficulty}</span>
+      </div>
+      <p class="stem">${q.stem}</p>
+      <div id="answerArea"></div>
+      <div class="feedback" id="feedback">
+        <span class="fmark" id="fmark"></span>
+        <div>
+          <b id="fverdict"></b>
+          <span id="fexplain"></span>
+          <div class="answer-line" id="fanswer" style="display:none;"></div>
+        </div>
+      </div>
+      <div class="next-row" id="nextRow" style="display:none;">
+        <button class="btn btn-primary btn-block" id="nextBtn"></button>
+      </div>
+    `;
+
+    const answerArea = document.getElementById("answerArea");
+
+    if (q.type === "mc"){
+      const opts = document.createElement("div");
+      opts.className = "options";
+      q.options.forEach((opt, i) => {
+        const b = document.createElement("button");
+        b.className = "opt";
+        b.type = "button";
+        b.innerHTML = `<span class="num">${i+1}</span><span>${opt}</span><span class="mark"></span>`;
+        b.addEventListener("click", () => handleMcAnswer(q, i, opts));
+        opts.appendChild(b);
+      });
+      answerArea.appendChild(opts);
+    } else {
+      const form = document.createElement("form");
+      form.className = "blank-form";
+      form.innerHTML = `
+        <input type="text" class="blank-input" id="blankInput" placeholder="정답을 입력하세요" autocomplete="off" />
+        <button type="submit" class="btn btn-primary" id="blankSubmit">확인</button>
+      `;
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        handleBlankAnswer(q);
+      });
+      answerArea.appendChild(form);
+      setTimeout(() => { const el = document.getElementById("blankInput"); if (el) el.focus(); }, 50);
+    }
+
+    renderStatus();
+  }
+
+  function lockOptions(container){
+    container.querySelectorAll(".opt").forEach(el => el.classList.add("locked"));
+  }
+
+  function showFeedback(isCorrect, q){
+    const fb = document.getElementById("feedback");
+    const fmark = document.getElementById("fmark");
+    const fverdict = document.getElementById("fverdict");
+    const fexplain = document.getElementById("fexplain");
+    const fanswer = document.getElementById("fanswer");
+
+    fb.classList.remove("correct","wrong");
+    fb.classList.add("show", isCorrect ? "correct" : "wrong");
+    fmark.textContent = isCorrect ? "✅" : "❌";
+    fverdict.textContent = isCorrect ? "정답이에요!" : "아쉬워요, 다시 확인해볼까요?";
+    fexplain.textContent = q.explain;
+
+    if (q.type === "blank" || !isCorrect){
+      fanswer.style.display = "block";
+      fanswer.textContent = "정답: " + (q.type === "blank" ? q.displayAnswer : q.options[q.answer]);
+    } else {
+      fanswer.style.display = "none";
+    }
+
+    const nextRow = document.getElementById("nextRow");
+    const nextBtn = document.getElementById("nextBtn");
+    nextRow.style.display = "block";
+    const isLast = state.pos === state.queue.length - 1;
+    nextBtn.textContent = isLast ? "결과 보기" : "다음 문항";
+    nextBtn.onclick = goNext;
+  }
+
+  function handleMcAnswer(q, choiceIdx, container){
+    if (state.answeredThisQ) return;
+    state.answeredThisQ = true;
+    const isCorrect = choiceIdx === q.answer;
+
+    container.querySelectorAll(".opt").forEach((el, i) => {
+      if (i === q.answer) el.classList.add("reveal-correct");
+      if (i === choiceIdx && isCorrect) el.classList.add("selected-correct");
+      if (i === choiceIdx && !isCorrect) el.classList.add("selected-wrong");
+      if (i !== q.answer && i !== choiceIdx) el.classList.add("dim");
+      const mark = el.querySelector(".mark");
+      if (i === q.answer) mark.textContent = "✓";
+      else if (i === choiceIdx) mark.textContent = "✕";
+    });
+    lockOptions(container);
+    registerResult(q.id, isCorrect);
+    showFeedback(isCorrect, q);
+  }
+
+  function handleBlankAnswer(q){
+    if (state.answeredThisQ) return;
+    const input = document.getElementById("blankInput");
+    const submit = document.getElementById("blankSubmit");
+    const raw = input.value;
+    const isCorrect = q.accepted.some(a => normalize(a) === normalize(raw));
+
+    state.answeredThisQ = true;
+    input.disabled = true;
+    submit.disabled = true;
+    input.style.borderColor = isCorrect ? "var(--primary)" : "var(--danger)";
+
+    registerResult(q.id, isCorrect);
+    showFeedback(isCorrect, q);
+  }
+
+  function registerResult(qid, isCorrect){
+    if (isCorrect){
+      const wasNew = !state.correct.has(qid);
+      state.correct.add(qid);
+      state.wrong.delete(qid);
+      if (wasNew) bumpScore();
+    } else {
+      state.wrong.add(qid);
+    }
+    renderStatus();
+  }
+
+  function goNext(){
+    if (state.pos < state.queue.length - 1){
+      state.pos += 1;
+      renderQuestion();
+      window.scrollTo({ top:0, behavior:"smooth" });
+    } else {
+      renderSummary();
+    }
+  }
+
+  // ---------------- Summary ----------------
+  function tierInfo(correctCount, totalCount){
+    const pct = correctCount / totalCount;
+    if (pct === 1) return { cls:"tier-a", label:"완벽해요! 🌿" };
+    if (pct >= 0.7) return { cls:"tier-b", label:"잘했어요, 조금만 더!" };
+    return { cls:"tier-c", label:"복습이 필요해요" };
+  }
+
+  function renderSummary(){
+    quizCard.style.display = "none";
+    summary.classList.add("show");
+
+    const total = QUESTIONS.length;
+    const correctCount = state.correct.size;
+    const wrongIds = QUESTIONS.map(q => q.id).filter(id => !state.correct.has(id));
+    const tier = tierInfo(correctCount, total);
+
+    let wrongListHtml = "";
+    if (wrongIds.length > 0){
+      wrongListHtml = `
+        <div class="wrong-list">
+          <h3>다시 볼 문항 (${wrongIds.length}개)</h3>
+          ${wrongIds.map(id => {
+            const q = byId(id);
+            return `<div class="wrong-item"><span class="qn">${id+1}</span><span class="qtext">${q.stem}</span></div>`;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    const actions = [];
+    if (wrongIds.length > 0){
+      actions.push(`<button class="btn btn-accent" id="retryWrongBtn">틀린 문항만 다시 풀기 (${wrongIds.length})</button>`);
+    }
+    actions.push(`<button class="btn btn-outline" id="restartBtn">처음부터 다시 풀기</button>`);
+
+    summary.innerHTML = `
+      <div class="summary-hero">
+        <svg class="summary-hex" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.6"><path d="M12 2 21 7v10l-9 5-9-5V7z"/></svg>
+        <div class="big">${state.mode === "review" ? "복습 결과" : "형성평가 결과"}</div>
+        <div class="score">${correctCount}<span> / ${total} 문항 정답</span></div>
+        <div class="summary-tier ${tier.cls}">${tier.label}</div>
+        <div class="big" style="margin-top:14px;">획득 포인트 · <b style="color:var(--primary)">${correctCount * POINTS_PER_Q}</b> / ${total * POINTS_PER_Q}</div>
+      </div>
+      ${wrongListHtml}
+      <div class="summary-actions">${actions.join("")}</div>
+    `;
+
+    const retryBtn = document.getElementById("retryWrongBtn");
+    if (retryBtn){
+      retryBtn.addEventListener("click", () => {
+        state.queue = wrongIds;
+        state.pos = 0;
+        state.mode = "review";
+        renderQuestion();
+        window.scrollTo({ top:0, behavior:"smooth" });
+      });
+    }
+    document.getElementById("restartBtn").addEventListener("click", resetAll);
+
+    renderStatusForSummary();
+  }
+
+  function renderStatusForSummary(){
+    progressText.textContent = "완료";
+    progressPct.textContent = "100%";
+    progressFill.style.width = "100%";
+    dotsWrap.innerHTML = "";
+    QUESTIONS.forEach(q => {
+      const d = document.createElement("div");
+      d.className = "dot " + (state.correct.has(q.id) ? "correct" : "wrong");
+      dotsWrap.appendChild(d);
+    });
+    scoreNum.textContent = state.correct.size * POINTS_PER_Q;
+  }
+
+  function resetAll(){
+    state.queue = QUESTIONS.map(q => q.id);
+    state.pos = 0;
+    state.correct = new Set();
+    state.wrong = new Set();
+    state.mode = "all";
+    renderQuestion();
+    window.scrollTo({ top:0, behavior:"smooth" });
+  }
+
+  // ---------------- Init ----------------
+  renderQuestion();
+})();
+</script>
+</body>
+</html>
