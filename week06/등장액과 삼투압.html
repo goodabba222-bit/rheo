@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>6주차 형성평가 퀴즈 · 등장액과 삼투압 계산</title>
+<style>
+  :root{
+    --primary:#028090;
+    --primary-dark:#013A40;
+    --secondary:#00A896;
+    --accent:#02C39A;
+    --ink:#1B2A2E;
+    --muted:#6b8083;
+    --bg:#F7FBFB;
+    --card:#FFFFFF;
+    --line:#E1EEEC;
+    --danger:#C0392B;
+    --danger-bg:#FDECEA;
+    --success-bg:#E8F8F3;
+    --mid-badge:#028090;
+    --high-badge:#B85042;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wrap{
+    max-width:640px;
+    margin:0 auto;
+    padding:16px 16px 48px;
+    padding-top:calc(16px + env(safe-area-inset-top,0px));
+    padding-bottom:calc(48px + env(safe-area-inset-bottom,0px));
+    min-height:100%;
+  }
+  header.top{
+    text-align:center;
+    padding:18px 12px 20px;
+  }
+  header.top h1{
+    font-size:1.35rem;
+    margin:0 0 4px;
+    color:var(--primary-dark);
+    font-weight:800;
+    line-height:1.35;
+  }
+  header.top p{
+    margin:0;
+    font-size:0.85rem;
+    color:var(--muted);
+  }
+
+  /* progress + score bar */
+  .status-bar{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .progress-wrap{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .progress-label{
+    font-size:0.78rem;
+    color:var(--muted);
+    font-weight:600;
+    display:flex;
+    justify-content:space-between;
+  }
+  .progress-track{
+    height:9px;
+    background:var(--line);
+    border-radius:999px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--secondary),var(--accent));
+    border-radius:999px;
+    transition:width .35s ease;
+    width:0%;
+  }
+  .score-pill{
+    flex-shrink:0;
+    background:var(--primary-dark);
+    color:#fff;
+    padding:8px 14px;
+    border-radius:999px;
+    font-weight:800;
+    font-size:0.85rem;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    white-space:nowrap;
+  }
+  .score-pill .star{color:var(--accent);font-size:1rem;}
+  .score-pill .num{
+    transition:transform .25s ease;
+    display:inline-block;
+  }
+  .score-pill.bump .num{
+    transform:scale(1.3);
+  }
+
+  /* card */
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:20px 18px;
+    box-shadow:0 2px 10px rgba(1,58,64,0.05);
+  }
+  .badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:12px;
+  }
+  .badge{
+    font-size:0.68rem;
+    font-weight:700;
+    padding:3px 9px;
+    border-radius:999px;
+    letter-spacing:.2px;
+  }
+  .badge.type{ background:#EAF6F5; color:var(--primary); }
+  .badge.topic{ background:#F4FBFA; color:var(--muted); }
+  .badge.diff-중{ background:#E3F2E9; color:#2E7D50; }
+  .badge.diff-상{ background:#FBEEEC; color:var(--high-badge); }
+
+  .question-text{
+    font-size:1.06rem;
+    line-height:1.55;
+    font-weight:700;
+    color:var(--ink);
+    margin:0 0 16px;
+  }
+  .question-text u{ text-decoration-color:var(--high-badge); text-decoration-thickness:2px; }
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .option-btn{
+    text-align:left;
+    padding:13px 14px;
+    border-radius:12px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    font-size:0.96rem;
+    color:var(--ink);
+    cursor:pointer;
+    transition:background .15s ease, border-color .15s ease, transform .1s ease;
+    line-height:1.4;
+    display:flex;
+    gap:8px;
+  }
+  .option-btn .opt-mark{
+    font-weight:800;
+    color:var(--primary);
+    flex-shrink:0;
+  }
+  .option-btn:active{ transform:scale(0.99); }
+  .option-btn:hover:not(:disabled){ border-color:var(--secondary); background:#F4FBFA; }
+  .option-btn:disabled{ cursor:default; }
+  .option-btn.correct{
+    background:var(--success-bg);
+    border-color:var(--accent);
+    color:#1c6b4d;
+    font-weight:700;
+  }
+  .option-btn.incorrect{
+    background:var(--danger-bg);
+    border-color:var(--danger);
+    color:var(--danger);
+    font-weight:700;
+  }
+  .option-btn.dim{ opacity:0.55; }
+
+  .blank-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .blank-input{
+    flex:1;
+    min-width:160px;
+    padding:12px 14px;
+    border-radius:12px;
+    border:1.5px solid var(--line);
+    font-size:1rem;
+    font-family:inherit;
+    outline:none;
+  }
+  .blank-input:focus{ border-color:var(--secondary); }
+  .blank-input:disabled{ background:#F4FBFA; color:var(--muted); }
+  .submit-btn{
+    padding:12px 20px;
+    border-radius:12px;
+    border:none;
+    background:var(--primary);
+    color:#fff;
+    font-weight:700;
+    font-size:0.95rem;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .submit-btn:disabled{ background:#B9D3D2; cursor:default; }
+  .submit-btn:active:not(:disabled){ transform:scale(0.98); }
+
+  .feedback{
+    margin-top:16px;
+    padding:14px 15px;
+    border-radius:12px;
+    font-size:0.92rem;
+    line-height:1.55;
+    display:none;
+  }
+  .feedback.show{ display:block; }
+  .feedback.ok{ background:var(--success-bg); color:#1c6b4d; }
+  .feedback.no{ background:var(--danger-bg); color:#8f3a30; }
+  .feedback .fb-title{
+    font-weight:800;
+    margin-bottom:4px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:0.98rem;
+  }
+  .feedback .fb-answer{
+    font-weight:700;
+    margin-bottom:4px;
+  }
+
+  .nav-row{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:18px;
+  }
+  .next-btn{
+    padding:12px 22px;
+    border-radius:999px;
+    border:none;
+    background:var(--primary-dark);
+    color:#fff;
+    font-weight:700;
+    font-size:0.95rem;
+    cursor:pointer;
+    display:none;
+  }
+  .next-btn.show{ display:inline-flex; align-items:center; gap:6px; }
+  .next-btn:active{ transform:scale(0.98); }
+
+  /* summary */
+  .summary-card{ text-align:center; }
+  .summary-score{
+    font-size:2.6rem;
+    font-weight:900;
+    color:var(--primary-dark);
+    margin:6px 0 2px;
+  }
+  .summary-sub{
+    color:var(--muted);
+    font-size:0.9rem;
+    margin-bottom:18px;
+  }
+  .summary-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin:18px 0;
+  }
+  .stat-box{
+    background:#F4FBFA;
+    border-radius:12px;
+    padding:14px 6px;
+  }
+  .stat-box .stat-num{ font-size:1.35rem; font-weight:800; color:var(--primary-dark); }
+  .stat-box .stat-label{ font-size:0.72rem; color:var(--muted); margin-top:2px; }
+
+  .wrong-list{
+    text-align:left;
+    margin:14px 0 4px;
+    padding:0;
+    list-style:none;
+  }
+  .wrong-list li{
+    padding:10px 12px;
+    border-radius:10px;
+    background:var(--danger-bg);
+    color:#8f3a30;
+    font-size:0.85rem;
+    margin-bottom:8px;
+    line-height:1.4;
+  }
+  .wrong-list li b{ color:var(--danger); }
+
+  .action-row{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+    flex-wrap:wrap;
+  }
+  .action-btn{
+    flex:1;
+    min-width:140px;
+    padding:13px 16px;
+    border-radius:12px;
+    font-weight:800;
+    font-size:0.92rem;
+    cursor:pointer;
+    border:none;
+  }
+  .action-btn.retry{ background:var(--high-badge); color:#fff; }
+  .action-btn.restart{ background:var(--primary); color:#fff; }
+  .action-btn.perfect{ background:var(--accent); color:#053b30; }
+
+  .save-hint{
+    margin-top:26px;
+    text-align:center;
+    font-size:0.75rem;
+    color:var(--muted);
+    line-height:1.6;
+  }
+
+  @media (max-width:380px){
+    header.top h1{ font-size:1.15rem; }
+    .card{ padding:16px 14px; }
+    .question-text{ font-size:1rem; }
+    .summary-score{ font-size:2.1rem; }
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1B1C;
+      --card:#132A2C;
+      --ink:#EAF6F5;
+      --line:#1E3A3C;
+      --muted:#8FB2AF;
+      --success-bg:#123329;
+      --danger-bg:#3A1E1B;
+    }
+    :root:not([data-theme="light"]) .badge.type{ background:#0E3336; }
+    :root:not([data-theme="light"]) .badge.topic{ background:#0E2A2C; }
+    :root:not([data-theme="light"]) .option-btn{ background:#132A2C; color:var(--ink); }
+    :root:not([data-theme="light"]) .stat-box{ background:#0E2A2C; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>💧 등장액과 삼투압 계산</h1>
+    <p>6주차 형성평가 퀴즈 · 제품 및 소재 물성 실습</p>
+  </header>
+
+  <div class="status-bar">
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="progressText">문항 1 / 10</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="score-pill" id="scorePill">
+      <span class="star">★</span><span class="num" id="scoreNum">0</span><span>점</span>
+    </div>
+  </div>
+
+  <div id="quizArea"></div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- 문항 데이터 ----------------
+  var quizData = [
+    {
+      id:1, type:"객관식", difficulty:"중", topic:"등장액·삼투압 개념",
+      question:"다음 중 눈물의 삼투압 값으로 가장 적절한 것은?",
+      options:["약 100 mOsm/L","약 300 mOsm/L","약 500 mOsm/L","약 700 mOsm/L"],
+      answerIndex:1,
+      explanation:"눈물의 삼투압은 약 300 mOsm/L(270~310 범위)이며, 등장액은 이 값에 맞춰 조정합니다."
+    },
+    {
+      id:2, type:"괄호넣기", difficulty:"중", topic:"삼투압 정의",
+      question:"반투과성 막을 사이에 두고 농도가 다른 두 용액이 있을 때, 용매(물)가 농도가 낮은 쪽에서 높은 쪽으로 이동하며 발생하는 압력을 (　　)(이)라 한다.",
+      accepted:["삼투압"],
+      explanation:"용매가 저농도에서 고농도로 이동하며 발생하는 압력을 '삼투압'이라고 합니다."
+    },
+    {
+      id:3, type:"객관식", difficulty:"중", topic:"등장액·고장액/저장액",
+      question:"다음 중 고장액(Hypertonic solution)의 삼투압 범위로 옳은 것은?",
+      options:["250 mOsm/L 미만","270 ~ 310 mOsm/L","350 mOsm/L 초과","정확히 300 mOsm/L"],
+      answerIndex:2,
+      explanation:"고장액(Hypertonic)은 350 mOsm/L 초과로 정의되며, 세포에서 물이 빠져나와 탈수·자극이 생깁니다."
+    },
+    {
+      id:4, type:"괄호넣기", difficulty:"상", topic:"van't Hoff 인자",
+      question:"van't Hoff 인자(i)는 용질이 물에 들어가 몇 개의 입자로 (　　)되는지를 나타내는 값이다.",
+      accepted:["해리"],
+      explanation:"i는 용질이 물속에서 몇 개의 입자로 '해리'되는지를 나타내는 값입니다."
+    },
+    {
+      id:5, type:"객관식", difficulty:"중", topic:"van't Hoff 인자 계산",
+      question:"CaCl₂가 물에 녹아 Ca²⁺ + 2Cl⁻로 해리될 때, van't Hoff 인자(i) 값은?",
+      options:["i = 1","i = 2","i = 3","i = 4"],
+      answerIndex:2,
+      explanation:"Ca²⁺ 1개 + Cl⁻ 2개 = 총 3개의 입자로 해리되므로 i = 3입니다."
+    },
+    {
+      id:6, type:"괄호넣기", difficulty:"상", topic:"계산 예제·몰농도",
+      question:"0.9%(w/v) NaCl 용액(9.00 g/L, NaCl 몰질량 58.44 g/mol)의 몰농도(C)는 약 (　　) M이다. (소수 셋째 자리까지)",
+      accepted:["0.154"],
+      explanation:"C = 9.00 g/L ÷ 58.44 g/mol = 0.154 M 로 계산됩니다."
+    },
+    {
+      id:7, type:"괄호넣기", difficulty:"중", topic:"Osmolarity 공식",
+      question:"Osmolarity(mOsm/L) = i × C × (　　)",
+      accepted:["1000"],
+      explanation:"Osm/L 단위를 mOsm/L로 바꾸려면 1000을 곱합니다."
+    },
+    {
+      id:8, type:"객관식", difficulty:"상", topic:"계산 예제·D5W",
+      question:"D5W(5% 포도당 용액, 약 278 mOsm/L)는 눈물(약 300 mOsm/L)에 비해 어떤 상태인가?",
+      options:["뚜렷한 고장액 상태이다","정확히 같은 등장액 상태이다","약간 저장액(저삼투) 상태이다","van't Hoff 인자가 0이므로 비교할 수 없다"],
+      answerIndex:2,
+      explanation:"D5W(278 mOsm/L)는 눈물(300 mOsm/L)보다 약간 낮은 저삼투 상태입니다."
+    },
+    {
+      id:9, type:"객관식", difficulty:"상", topic:"계산 예제 D·역산",
+      question:"눈물과 유사한 등장액(목표 300 mOsm/L = 0.300 Osm/L)을 NaCl(i ≈ 2)만으로 만들 때 필요한 NaCl의 질량은 약 몇 g/L인가?",
+      options:["4.38 g/L","8.77 g/L","17.53 g/L","58.44 g/L"],
+      answerIndex:1,
+      explanation:"C = 0.300÷2 = 0.150 M, 질량 = 0.150 × 58.44 ≈ 8.77 g/L (약 0.877% w/v) 입니다."
+    },
+    {
+      id:10, type:"객관식", difficulty:"상", topic:"실무 적용 팁",
+      question:"슬라이드의 '실무 적용 팁'에서 이론적으로 계산한 삼투압과 실제 측정값이 달라질 수 있는 원인으로 언급되지 <u>않은</u> 것은?",
+      options:["전해질의 불완전한 이상해리","이온쌍(ion pair) 형성","온도의 영향","기체 상수(R) 값 자체의 오차"],
+      answerIndex:3,
+      explanation:"R은 정해진 물리 상수이므로 오차의 원인으로 언급되지 않습니다. 실제 원인은 이상해리·이온쌍·온도 등입니다."
+    }
+  ];
+
+  var POINTS = { "중":10, "상":15 };
+
+  // ---------------- 상태 ----------------
+  var order = quizData.map(function(_,i){ return i; });
+  var currentPos = 0;
+  var score = 0;
+  var attemptCorrect = []; // 이번 라운드에서 각 문항 정답 여부
+  var wrongThisRound = []; // quizData 인덱스 배열
+
+  var quizArea = document.getElementById("quizArea");
+  var progressFill = document.getElementById("progressFill");
+  var progressText = document.getElementById("progressText");
+  var progressPercent = document.getElementById("progressPercent");
+  var scoreNum = document.getElementById("scoreNum");
+  var scorePill = document.getElementById("scorePill");
+
+  function normalize(s){
+    return String(s)
+      .replace(/\(.*?\)/g, "")
+      .replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, "")
+      .toLowerCase();
+  }
+
+  function bumpScore(delta){
+    score += delta;
+    scoreNum.textContent = score;
+    scorePill.classList.add("bump");
+    setTimeout(function(){ scorePill.classList.remove("bump"); }, 260);
+  }
+
+  function updateProgress(){
+    var total = order.length;
+    var pos = Math.min(currentPos, total);
+    var pct = total > 0 ? Math.round((pos/total)*100) : 0;
+    progressFill.style.width = pct + "%";
+    progressText.textContent = "문항 " + Math.min(currentPos+1,total) + " / " + total;
+    progressPercent.textContent = pct + "%";
+  }
+
+  function badgeHTML(q){
+    return (
+      '<div class="badges">' +
+        '<span class="badge type">' + q.type + '</span>' +
+        '<span class="badge diff-' + q.difficulty + '">난이도 ' + q.difficulty + '</span>' +
+        '<span class="badge topic">' + q.topic + '</span>' +
+      '</div>'
+    );
+  }
+
+  function renderQuestion(){
+    if (currentPos >= order.length){
+      renderSummary();
+      return;
+    }
+    updateProgress();
+    var qIdx = order[currentPos];
+    var q = quizData[qIdx];
+
+    var html = '<div class="card" id="qCard">';
+    html += badgeHTML(q);
+    html += '<p class="question-text">' + q.question + '</p>';
+
+    if (q.type === "객관식"){
+      html += '<div class="options" id="optionsWrap">';
+      var marks = ["①","②","③","④"];
+      q.options.forEach(function(opt, i){
+        html += '<button class="option-btn" data-idx="' + i + '"><span class="opt-mark">' + marks[i] + '</span><span>' + opt + '</span></button>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="blank-row">';
+      html += '<input type="text" class="blank-input" id="blankInput" placeholder="정답을 입력하세요" autocomplete="off">';
+      html += '<button class="submit-btn" id="submitBlank">확인</button>';
+      html += '</div>';
+    }
+
+    html += '<div class="feedback" id="feedback"></div>';
+    html += '<div class="nav-row"><button class="next-btn" id="nextBtn">다음 문항 →</button></div>';
+    html += '</div>';
+
+    quizArea.innerHTML = html;
+
+    if (q.type === "객관식"){
+      var buttons = quizArea.querySelectorAll(".option-btn");
+      buttons.forEach(function(btn){
+        btn.addEventListener("click", function(){
+          handleMCQAnswer(q, qIdx, parseInt(btn.getAttribute("data-idx"),10), buttons);
+        });
+      });
+    } else {
+      var input = document.getElementById("blankInput");
+      var submitBtn = document.getElementById("submitBlank");
+      function submit(){ handleBlankAnswer(q, qIdx, input, submitBtn); }
+      submitBtn.addEventListener("click", submit);
+      input.addEventListener("keydown", function(e){
+        if (e.key === "Enter") submit();
+      });
+      setTimeout(function(){ input.focus(); }, 50);
+    }
+
+    document.getElementById("nextBtn").addEventListener("click", function(){
+      currentPos++;
+      renderQuestion();
+    });
+  }
+
+  function showFeedback(isCorrect, correctAnswerText, explanation){
+    var fb = document.getElementById("feedback");
+    fb.className = "feedback show " + (isCorrect ? "ok" : "no");
+    var title = isCorrect ? "✅ 정답입니다!" : "❌ 오답입니다";
+    var answerLine = isCorrect ? "" : '<div class="fb-answer">정답 : ' + correctAnswerText + '</div>';
+    fb.innerHTML = '<div class="fb-title">' + title + '</div>' + answerLine + '<div>' + explanation + '</div>';
+    document.getElementById("nextBtn").classList.add("show");
+  }
+
+  function recordResult(qIdx, isCorrect, difficulty){
+    attemptCorrect[currentPos] = isCorrect;
+    if (isCorrect){
+      bumpScore(POINTS[difficulty] || 10);
+    } else {
+      if (wrongThisRound.indexOf(qIdx) === -1) wrongThisRound.push(qIdx);
+    }
+  }
+
+  function handleMCQAnswer(q, qIdx, chosenIdx, buttons){
+    if (buttons[0].disabled) return; // 이미 답변함
+    var isCorrect = chosenIdx === q.answerIndex;
+    buttons.forEach(function(b, i){
+      b.disabled = true;
+      if (i === q.answerIndex) b.classList.add("correct");
+      else if (i === chosenIdx) b.classList.add("incorrect");
+      else b.classList.add("dim");
+    });
+    recordResult(qIdx, isCorrect, q.difficulty);
+    showFeedback(isCorrect, q.options[q.answerIndex], q.explanation);
+  }
+
+  function handleBlankAnswer(q, qIdx, input, submitBtn){
+    if (input.disabled) return;
+    var raw = input.value.trim();
+    if (!raw){ input.focus(); return; }
+    var userNorm = normalize(raw);
+    var isCorrect = q.accepted.some(function(acc){
+      var accNorm = normalize(acc);
+      return userNorm === accNorm || (userNorm.length>=2 && (userNorm.indexOf(accNorm)!==-1 || accNorm.indexOf(userNorm)!==-1));
+    });
+    input.disabled = true;
+    submitBtn.disabled = true;
+    input.style.borderColor = isCorrect ? "var(--accent)" : "var(--danger)";
+    recordResult(qIdx, isCorrect, q.difficulty);
+    showFeedback(isCorrect, q.accepted[0], q.explanation);
+  }
+
+  function renderSummary(){
+    updateProgress();
+    var total = order.length;
+    var correctCount = attemptCorrect.filter(Boolean).length;
+    var wrongCount = total - correctCount;
+    var pct = total>0 ? Math.round((correctCount/total)*100) : 0;
+
+    var html = '<div class="card summary-card">';
+    if (wrongCount === 0){
+      html += '<div style="font-size:2.4rem;">🎉</div>';
+      html += '<div class="summary-score">' + score + '점</div>';
+      html += '<div class="summary-sub">전 문항 정답! 완벽합니다.</div>';
+    } else {
+      html += '<div style="font-size:2.2rem;">📊</div>';
+      html += '<div class="summary-score">' + score + '점</div>';
+      html += '<div class="summary-sub">누적 획득 포인트</div>';
+    }
+
+    html += '<div class="summary-grid">';
+    html += '<div class="stat-box"><div class="stat-num">' + total + '</div><div class="stat-label">전체 문항</div></div>';
+    html += '<div class="stat-box"><div class="stat-num" style="color:#2E7D50;">' + correctCount + '</div><div class="stat-label">정답</div></div>';
+    html += '<div class="stat-box"><div class="stat-num" style="color:var(--danger);">' + wrongCount + '</div><div class="stat-label">오답</div></div>';
+    html += '</div>';
+
+    html += '<div class="stat-box" style="margin-bottom:4px;"><div class="stat-num">' + pct + '%</div><div class="stat-label">정답률</div></div>';
+
+    if (wrongCount > 0){
+      html += '<ul class="wrong-list">';
+      order.forEach(function(qIdx, i){
+        if (!attemptCorrect[i]){
+          var q = quizData[qIdx];
+          html += '<li><b>문항 ' + q.id + '</b> · ' + q.topic + ' — ' + q.explanation + '</li>';
+        }
+      });
+      html += '</ul>';
+    }
+
+    html += '<div class="action-row">';
+    if (wrongCount > 0){
+      html += '<button class="action-btn retry" id="retryWrongBtn">틀린 문항만 다시 풀기</button>';
+    }
+    html += '<button class="action-btn restart" id="restartBtn">처음부터 다시 풀기</button>';
+    html += '</div>';
+
+    html += '<div class="save-hint">이 페이지는 인터넷 연결 없이도 열 수 있는 단일 HTML 파일입니다.<br>브라우저 메뉴에서 "다른 이름으로 저장"을 선택하면 그대로 보관할 수 있어요.</div>';
+
+    html += '</div>';
+    quizArea.innerHTML = html;
+
+    if (wrongCount > 0){
+      document.getElementById("retryWrongBtn").addEventListener("click", function(){
+        order = wrongThisRound.slice();
+        wrongThisRound = [];
+        attemptCorrect = [];
+        currentPos = 0;
+        renderQuestion();
+      });
+    }
+    document.getElementById("restartBtn").addEventListener("click", function(){
+      order = quizData.map(function(_,i){ return i; });
+      wrongThisRound = [];
+      attemptCorrect = [];
+      currentPos = 0;
+      score = 0;
+      scoreNum.textContent = "0";
+      renderQuestion();
+    });
+  }
+
+  // ---------------- 시작 ----------------
+  renderQuestion();
+})();
+</script>
+</body>
+</html>
