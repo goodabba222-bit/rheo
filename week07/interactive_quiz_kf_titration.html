@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>형성평가 퀴즈 — 칼피셔 수분측정법 (용량적정법과 오븐법)</title>
+<style>
+  :root {
+    --ink: #0f2a3d;
+    --ink-soft: #4d6373;
+    --bg: #f2f9fb;
+    --card: #ffffff;
+    --teal: #0e7c86;
+    --teal-dark: #0a5f67;
+    --amber: #f2a93b;
+    --amber-dark: #c9820f;
+    --coral: #e2574c;
+    --coral-dark: #b6382f;
+    --line: #dcebee;
+    --shadow: 0 10px 30px rgba(15, 42, 61, 0.08);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    min-height: 100%;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: radial-gradient(1200px 600px at 50% -10%, #e4f4f7 0%, var(--bg) 55%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 22px 16px 48px;
+  }
+
+  /* ---------- 헤더 ---------- */
+  .hero {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .hero-drop {
+    flex: 0 0 auto;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(155deg, var(--teal), var(--teal-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 16px rgba(14, 124, 134, 0.35);
+  }
+  .hero-drop svg { width: 24px; height: 24px; }
+  .hero-text h1 {
+    margin: 0;
+    font-size: 19px;
+    line-height: 1.3;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+  .hero-text p {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- 진행률 & 점수 ---------- */
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .progress-outer {
+    flex: 1 1 auto;
+    background: #dcebee;
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--teal), #34a7ab);
+    width: 0%;
+    transition: width 0.45s cubic-bezier(.4,0,.2,1);
+  }
+  .progress-label {
+    flex: 0 0 auto;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    min-width: 56px;
+    text-align: right;
+  }
+  .score-chip {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff7e8;
+    border: 1px solid #f4dca4;
+    border-radius: 999px;
+    padding: 6px 12px 6px 8px;
+    font-weight: 800;
+    font-size: 13.5px;
+    color: var(--amber-dark);
+    white-space: nowrap;
+  }
+  .score-chip .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--amber);
+    flex: 0 0 auto;
+  }
+  .score-chip.bump { animation: bump 0.4s ease; }
+  @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+
+  /* ---------- 문제 카드 ---------- */
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 22px 20px 20px;
+    margin-bottom: 16px;
+  }
+  .q-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .q-num {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--teal-dark);
+    background: #e3f3f2;
+    border-radius: 999px;
+    padding: 3px 10px;
+  }
+  .q-level {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .q-level.mid { background: #eaf1f9; color: #35547a; }
+  .q-level.high { background: #fdeceb; color: var(--coral-dark); }
+  .q-type {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .q-stem {
+    font-size: 16.5px;
+    line-height: 1.55;
+    font-weight: 700;
+    margin: 4px 0 16px;
+  }
+
+  /* 객관식 옵션 */
+  .options { display: flex; flex-direction: column; gap: 9px; }
+  .opt-btn {
+    text-align: left;
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: 13px;
+    border: 1.6px solid var(--line);
+    background: #fbfdfe;
+    font-size: 14.5px;
+    line-height: 1.45;
+    color: var(--ink);
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    transition: border-color .15s, background .15s, transform .1s;
+    font-family: inherit;
+  }
+  .opt-btn:active { transform: scale(0.99); }
+  .opt-btn:hover:not(:disabled) { border-color: #b7dadd; background: #f3fbfb; }
+  .opt-btn .opt-letter {
+    flex: 0 0 auto;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: #eef4f6;
+    color: var(--ink-soft);
+    font-weight: 800;
+    font-size: 12.5px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .opt-btn:disabled { cursor: default; }
+  .opt-btn.correct {
+    border-color: var(--teal);
+    background: #e9f7f4;
+  }
+  .opt-btn.correct .opt-letter { background: var(--teal); color: #fff; }
+  .opt-btn.wrong {
+    border-color: var(--coral);
+    background: #fdefee;
+  }
+  .opt-btn.wrong .opt-letter { background: var(--coral); color: #fff; }
+  .opt-btn.dim { opacity: 0.55; }
+
+  /* 단답형 (문장 속 인라인 입력칸) */
+  .blank-sentence {
+    font-size: 16.5px;
+    line-height: 2.2;
+    font-weight: 700;
+  }
+  .blank-input {
+    display: inline-block;
+    width: 92px;
+    max-width: 40vw;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--teal-dark);
+    border: none;
+    border-bottom: 2.5px solid #b7dadd;
+    background: transparent;
+    padding: 2px 4px;
+    margin: 0 2px;
+  }
+  .blank-input:focus { outline: none; border-bottom-color: var(--teal); }
+  .blank-input.correct { border-bottom-color: var(--teal); color: var(--teal-dark); background: #e9f7f4; border-radius: 6px 6px 0 0; }
+  .blank-input.wrong { border-bottom-color: var(--coral); color: var(--coral-dark); background: #fdefee; border-radius: 6px 6px 0 0; }
+  .blank-input:disabled { opacity: 1; }
+
+  .submit-row { margin-top: 18px; }
+  .btn {
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: 13px;
+    border: none;
+    font-size: 15px;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    transition: filter .15s, transform .1s;
+  }
+  .btn:active { transform: scale(0.99); }
+  .btn-primary { background: var(--teal); color: #fff; }
+  .btn-primary:hover { filter: brightness(1.06); }
+  .btn-primary:disabled { background: #b9d8d6; cursor: not-allowed; }
+  .btn-secondary { background: #eef4f6; color: var(--ink); }
+  .btn-outline { background: #fff; color: var(--teal-dark); border: 1.6px solid var(--teal); }
+
+  /* 피드백 */
+  .feedback {
+    margin-top: 16px;
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.55;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct { background: #e9f7f4; color: #0a4b45; border: 1px solid #bfe6de; }
+  .feedback.wrong { background: #fdefee; color: #7a2a22; border: 1px solid #f5c9c3; }
+  .feedback .fb-title { font-weight: 800; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; font-size: 14.5px; }
+  .feedback .fb-ans { font-weight: 700; }
+
+  /* ---------- 요약 화면 ---------- */
+  .summary-card { text-align: center; }
+  .summary-score {
+    font-size: 46px;
+    font-weight: 900;
+    color: var(--teal-dark);
+    margin: 6px 0 0;
+    letter-spacing: -0.02em;
+  }
+  .summary-score span { font-size: 20px; color: var(--ink-soft); font-weight: 700; }
+  .summary-sub { color: var(--ink-soft); font-size: 13.5px; margin-bottom: 18px; }
+  .summary-badge {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 5px 14px;
+    border-radius: 999px;
+    margin-bottom: 6px;
+  }
+  .result-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 18px 0 6px;
+    text-align: left;
+  }
+  .result-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #fbfdfe;
+    border: 1px solid var(--line);
+    font-size: 13.5px;
+  }
+  .result-row .icon {
+    flex: 0 0 auto;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 900;
+    color: #fff;
+  }
+  .result-row .icon.ok { background: var(--teal); }
+  .result-row .icon.no { background: var(--coral); }
+  .result-row .rtext { flex: 1 1 auto; color: var(--ink); }
+  .result-row .rtext b { font-weight: 800; }
+
+  .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+
+  .footer-note {
+    text-align: center;
+    color: #9db3bd;
+    font-size: 11.5px;
+    margin-top: 22px;
+  }
+
+  @media (max-width: 380px) {
+    .q-stem, .blank-sentence { font-size: 15.5px; }
+    .hero-text h1 { font-size: 17px; }
+  }
+
+  [data-screen] { display: none; }
+  [data-screen].active { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="hero-drop">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 3H14V8.2L17.5 15.5C18.3 17.2 17.1 19 15.3 19H8.7C6.9 19 5.7 17.2 6.5 15.5L10 8.2V3Z" fill="#ffffff"/>
+        <path d="M8.7 13.5H15.3" stroke="#0e7c86" stroke-width="1.1"/>
+        <circle cx="11" cy="16" r="0.9" fill="#0e7c86"/>
+        <circle cx="13.3" cy="17" r="0.6" fill="#0e7c86"/>
+      </svg>
+    </div>
+    <div class="hero-text">
+      <h1>칼피셔 수분측정법</h1>
+      <p>용량적정법과 오븐법 · 형성평가 퀴즈</p>
+    </div>
+  </div>
+
+  <div class="status-row">
+    <div class="progress-outer"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">1 / 10</div>
+  </div>
+  <div class="status-row" style="margin-top:-10px;">
+    <div style="flex:1 1 auto;"></div>
+    <div class="score-chip" id="scoreChip"><span class="dot"></span><span id="scoreValue">0</span>점 / <span id="scoreTotal">100</span>점</div>
+  </div>
+
+  <!-- 퀴즈 화면 -->
+  <div data-screen="quiz" class="active">
+    <div class="card" id="quizCard"></div>
+  </div>
+
+  <!-- 요약 화면 -->
+  <div data-screen="summary">
+    <div class="card summary-card" id="summaryCard"></div>
+  </div>
+
+  <p class="footer-note">이 파일은 인터넷 연결 없이 오프라인으로도 동작합니다.</p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------------------------------------------------------------
+  // 1) 문제 데이터
+  //    - type: "mcq" (4지선다) | "blank" (빈칸, ___ 로 표시)
+  //    - blanks: 각 빈칸의 정답 판정 방식
+  // ---------------------------------------------------------------
+  var QUESTIONS = [
+    {
+      id: 1, level: "중", type: "mcq",
+      stem: "칼피셔(KF) 반응에서 물(H₂O), 요오드(I₂), 이산화황(SO₂)의 몰비(Mole ratio) 관계로 옳은 것은?",
+      options: ["1 : 2 : 1", "1 : 1 : 1", "2 : 1 : 1", "1 : 1 : 2"],
+      correct: 1,
+      explanation: "강의자료의 몰비(Mole ratio) H₂O : I₂ : SO₂ = 1 : 1 : 1 그대로입니다."
+    },
+    {
+      id: 2, level: "중", type: "blank",
+      stem: "KF 반응에 필요한 4가지 재료는 메탄올(용매), 이산화황, 요오드, 그리고 ___이다.",
+      blanks: [{ keywords: ["염기"], width: 150 }],
+      explanation: "강의자료의 \u201C반응에 필요한 4가지 재료: 메탄올(용매)·이산화황·염기(피리딘/이미다졸)·요오드\u201D와 일치합니다.",
+      answerDisplay: "염기(피리딘 또는 이미다졸 계열)"
+    },
+    {
+      id: 3, level: "상", type: "mcq",
+      stem: "KF 시약 중 이액형(Two-component)에 대한 설명으로 가장 적절한 것은?",
+      options: [
+        "모든 성분이 한 병에 들어 있어 사용이 간편하지만 보관 중 서서히 변질될 수 있다",
+        "A용액(이산화황+염기+메탄올)과 B용액(요오드+메탄올)으로 분리되어 있으며, 케톤·알데하이드 시료 적정에 유리하다",
+        "피리딘만을 염기로 사용하며 다른 염기는 사용할 수 없다",
+        "이액형은 반드시 오븐법과 함께 사용해야 한다"
+      ],
+      correct: 1,
+      explanation: "강의자료의 이액형 정의와 특징(A/B 용액 분리, 빠른 적정, 역가가 오래 유지됨, 케톤·알데하이드 시료에 유리)과 일치합니다."
+    },
+    {
+      id: 4, level: "중", type: "blank",
+      stem: "과거 KF 반응의 염기로 피리딘이 사용되었으나, 강한 냄새와 독성, 취급 불편으로 인해 현재는 ___(으)로 대체되었다.",
+      blanks: [{ keywords: ["이미다졸"], width: 150 }],
+      explanation: "강의자료에 \u201C피리딘은 염기 역할로 과거 KF에 사용되었으나, 강한 냄새·독성·취급 불편으로 이미다졸·2-메틸이미다졸로 대체\u201D되었다고 명시되어 있습니다.",
+      answerDisplay: "이미다졸(또는 2-메틸이미다졸)"
+    },
+    {
+      id: 5, level: "상", type: "mcq",
+      stem: "칼피셔 적정에서 종말점(End Point)을 감지하는 원리로 가장 적절한 것은?",
+      options: [
+        "용액의 색깔이 무색에서 파란색으로 변하는 순간을 육안으로 확인한다",
+        "두 백금 전극 사이에 약한 전류를 흘려주고 전압을 측정하며, 물이 다 소모되어 요오드가 남기 시작하면 전압이 급격히 상승하는 지점을 감지한다",
+        "시료의 무게가 더 이상 감소하지 않는 시점을 저울로 측정한다",
+        "반응 용액의 온도가 일정하게 유지되는 시점을 감지한다"
+      ],
+      correct: 1,
+      explanation: "강의자료의 종말점 감지 원리(Double Pt 전극에 50μA 전류, 전압이 약 250mV까지 급격히 상승하는 지점 = 종말점)와 일치합니다."
+    },
+    {
+      id: 6, level: "상", type: "blank",
+      stem: "오븐법은 시료가 KF 시약에 잘 녹지 않거나 시약과 ___을 일으키는 경우, 또는 고체·분말 형태의 시료를 측정할 때 사용한다.",
+      blanks: [{ keywords: ["부반응"], width: 130 }],
+      explanation: "강의자료의 오븐법 사용 대상 설명(\u201C시약과 부반응을 일으키는 시료: 유기물질, 의약품 원료 등\u201D)과 일치합니다.",
+      answerDisplay: "부반응"
+    },
+    {
+      id: 7, level: "상", type: "mcq",
+      stem: "오븐법 실습 절차를 순서대로 나열한 것으로 옳은 것은?\n① 바이알을 오븐에 넣는다  ② 샘플의 무게를 측정한다  ③ 바이알을 밀봉한다  ④ KF 적정기에서 측정을 시작한다",
+      options: ["② → ③ → ① → ④", "① → ② → ③ → ④", "② → ① → ③ → ④", "③ → ② → ① → ④"],
+      correct: 0,
+      explanation: "강의자료의 오븐법 실습 절차(1.샘플 무게 측정 → 2.바이알 밀봉 → 3.바이알을 오븐에 투입 → 4.KF 적정기에서 측정 시작) 순서와 일치합니다."
+    },
+    {
+      id: 8, level: "중", type: "blank",
+      stem: "수분이 강하게 결합된 시료(단백질·고분자·정제)는 Gas Flow를 ___분 이상 유지해야 한다.",
+      blanks: [{ number: 15, width: 70 }],
+      explanation: "강의자료의 Gas Flow 유지시간 가이드에 따르면, 수분이 강하게 결합된 시료는 15분 이상 유지가 필요합니다.",
+      answerDisplay: "15"
+    }
+  ];
+
+  var POINTS_PER_Q = 10;
+  var TOTAL_POINTS = QUESTIONS.length * POINTS_PER_Q;
+
+  // ---------------------------------------------------------------
+  // 2) 상태
+  // ---------------------------------------------------------------
+  var state = {
+    order: QUESTIONS.map(function (q) { return q.id; }),
+    pos: 0,
+    results: {},     // id -> true/false
+    answered: false,
+    mode: "all"       // "all" | "retry"
+  };
+
+  var byId = {};
+  QUESTIONS.forEach(function (q) { byId[q.id] = q; });
+
+  // ---------------------------------------------------------------
+  // 3) 유틸
+  // ---------------------------------------------------------------
+  function normalize(s) {
+    return (s || "").toString().trim().toLowerCase().replace(/\s+/g, "");
+  }
+
+  function checkBlankValue(blankDef, rawInput) {
+    var norm = normalize(rawInput);
+    if (norm === "") return false;
+    if (typeof blankDef.number === "number") {
+      var n = parseFloat(rawInput.toString().replace(/[^0-9.\-]/g, ""));
+      if (isNaN(n)) return false;
+      return Math.abs(n - blankDef.number) < 1e-6;
+    }
+    var kw = blankDef.keywords || [];
+    var alt = blankDef.altKeywords || [];
+    var excl = blankDef.excludeKeywords || [];
+    for (var i = 0; i < excl.length; i++) {
+      if (norm.indexOf(normalize(excl[i])) !== -1) return false;
+    }
+    var hasAllKw = kw.every(function (k) { return norm.indexOf(normalize(k)) !== -1; });
+    if (hasAllKw) return true;
+    var hasAlt = alt.some(function (k) { return norm.indexOf(normalize(k)) !== -1; });
+    return hasAlt;
+  }
+
+  function totalScore() {
+    var s = 0;
+    Object.keys(state.results).forEach(function (id) {
+      if (state.results[id]) s += POINTS_PER_Q;
+    });
+    return s;
+  }
+
+  function setScoreDisplay(bump) {
+    document.getElementById("scoreValue").textContent = totalScore();
+    document.getElementById("scoreTotal").textContent = TOTAL_POINTS;
+    if (bump) {
+      var chip = document.getElementById("scoreChip");
+      chip.classList.remove("bump");
+      void chip.offsetWidth;
+      chip.classList.add("bump");
+    }
+  }
+
+  function setProgress() {
+    var current = state.pos + 1;
+    var total = state.order.length;
+    var pct = Math.round((state.pos / total) * 100);
+    document.getElementById("progressFill").style.width = pct + "%";
+    document.getElementById("progressLabel").textContent = current + " / " + total;
+  }
+
+  function showScreen(name) {
+    document.querySelectorAll("[data-screen]").forEach(function (el) {
+      el.classList.toggle("active", el.getAttribute("data-screen") === name);
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // 4) 렌더링 — 문제 화면
+  // ---------------------------------------------------------------
+  function renderQuestion() {
+    state.answered = false;
+    setProgress();
+    var qid = state.order[state.pos];
+    var q = byId[qid];
+    var card = document.getElementById("quizCard");
+    card.innerHTML = "";
+
+    var meta = document.createElement("div");
+    meta.className = "q-meta";
+    meta.innerHTML =
+      '<span class="q-num">Q' + (state.pos + 1) + '</span>' +
+      '<span class="q-level ' + (q.level === "상" ? "high" : "mid") + '">' + q.level + '</span>' +
+      '<span class="q-type">' + (q.type === "mcq" ? "객관식" : "빈칸 채우기") + '</span>';
+    card.appendChild(meta);
+
+    if (q.type === "mcq") {
+      renderMCQ(card, q);
+    } else {
+      renderBlank(card, q);
+    }
+
+    var fb = document.createElement("div");
+    fb.className = "feedback";
+    fb.id = "feedbackBox";
+    card.appendChild(fb);
+  }
+
+  function renderMCQ(card, q) {
+    var stemEl = document.createElement("div");
+    stemEl.className = "q-stem";
+    stemEl.textContent = q.stem;
+    card.appendChild(stemEl);
+
+    var opts = document.createElement("div");
+    opts.className = "options";
+    var letters = ["A", "B", "C", "D"];
+    q.options.forEach(function (optText, i) {
+      var btn = document.createElement("button");
+      btn.className = "opt-btn";
+      btn.type = "button";
+      btn.innerHTML = '<span class="opt-letter">' + letters[i] + '</span><span>' + optText + '</span>';
+      btn.addEventListener("click", function () { handleMCQAnswer(q, i, opts); });
+      opts.appendChild(btn);
+    });
+    card.appendChild(opts);
+  }
+
+  function handleMCQAnswer(q, chosenIndex, optsContainer) {
+    if (state.answered) return;
+    state.answered = true;
+    var isCorrect = chosenIndex === q.correct;
+    state.results[q.id] = isCorrect;
+
+    var btns = optsContainer.querySelectorAll(".opt-btn");
+    btns.forEach(function (b, i) {
+      b.disabled = true;
+      if (i === q.correct) b.classList.add("correct");
+      if (i === chosenIndex && !isCorrect) b.classList.add("wrong");
+      if (i !== q.correct && i !== chosenIndex) b.classList.add("dim");
+    });
+
+    showFeedback(isCorrect, q.explanation, null);
+    setScoreDisplay(isCorrect);
+    appendNextButton();
+  }
+
+  function renderBlank(card, q) {
+    var sentence = document.createElement("div");
+    sentence.className = "blank-sentence";
+
+    var parts = q.stem.split("___");
+    var inputs = [];
+    parts.forEach(function (part, i) {
+      sentence.appendChild(document.createTextNode(part));
+      if (i < parts.length - 1) {
+        var input = document.createElement("input");
+        input.type = "text";
+        input.className = "blank-input";
+        input.style.width = (q.blanks[i].width || 90) + "px";
+        input.setAttribute("inputmode", "text");
+        input.setAttribute("autocomplete", "off");
+        input.setAttribute("data-blank-index", i);
+        input.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); confirmBlank(q, inputs); }
+        });
+        inputs.push(input);
+        sentence.appendChild(input);
+      }
+    });
+    card.appendChild(sentence);
+
+    var row = document.createElement("div");
+    row.className = "submit-row";
+    var btn = document.createElement("button");
+    btn.className = "btn btn-primary";
+    btn.type = "button";
+    btn.textContent = "확인";
+    btn.addEventListener("click", function () { confirmBlank(q, inputs); });
+    row.appendChild(btn);
+    card.appendChild(row);
+
+    setTimeout(function () { if (inputs[0]) inputs[0].focus(); }, 50);
+  }
+
+  function confirmBlank(q, inputs) {
+    if (state.answered) return;
+    var allFilled = inputs.every(function (inp) { return inp.value.trim() !== ""; });
+    if (!allFilled) {
+      inputs.forEach(function (inp) {
+        if (inp.value.trim() === "") inp.style.borderBottomColor = "var(--coral)";
+      });
+      return;
+    }
+    state.answered = true;
+
+    var allCorrect = true;
+    inputs.forEach(function (inp, i) {
+      var ok = checkBlankValue(q.blanks[i], inp.value);
+      inp.disabled = true;
+      inp.classList.add(ok ? "correct" : "wrong");
+      if (!ok) allCorrect = false;
+    });
+
+    state.results[q.id] = allCorrect;
+    showFeedback(allCorrect, q.explanation, q.answerDisplay);
+    setScoreDisplay(allCorrect);
+
+    var submitBtn = document.querySelector(".submit-row .btn-primary");
+    if (submitBtn) submitBtn.remove();
+    appendNextButton();
+  }
+
+  function showFeedback(isCorrect, explanation, answerDisplay) {
+    var fb = document.getElementById("feedbackBox");
+    fb.className = "feedback show " + (isCorrect ? "correct" : "wrong");
+    var title = isCorrect ? "정답입니다!" : "아쉬워요, 오답입니다.";
+    var icon = isCorrect ? "\u2713" : "\u2717";
+    var ansLine = (!isCorrect && answerDisplay) ? ('<div class="fb-ans">정답: ' + answerDisplay + '</div>') : "";
+    fb.innerHTML =
+      '<div class="fb-title">' + icon + ' ' + title + '</div>' +
+      ansLine +
+      '<div>' + explanation + '</div>';
+  }
+
+  function appendNextButton() {
+    var card = document.getElementById("quizCard");
+    var row = document.createElement("div");
+    row.className = "submit-row";
+    var btn = document.createElement("button");
+    btn.className = "btn btn-primary";
+    btn.type = "button";
+    var isLast = state.pos >= state.order.length - 1;
+    btn.textContent = isLast ? "결과 보기" : "다음 문항";
+    btn.addEventListener("click", function () {
+      if (isLast) {
+        finishQuiz();
+      } else {
+        state.pos += 1;
+        renderQuestion();
+      }
+    });
+    row.appendChild(btn);
+    card.appendChild(row);
+    setTimeout(function () { if (row.scrollIntoView) { row.scrollIntoView({ behavior: "smooth", block: "end" }); } }, 60);
+  }
+
+  // ---------------------------------------------------------------
+  // 5) 요약 화면
+  // ---------------------------------------------------------------
+  function finishQuiz() {
+    document.getElementById("progressFill").style.width = "100%";
+    document.getElementById("progressLabel").textContent = state.order.length + " / " + state.order.length;
+    renderSummary();
+    showScreen("summary");
+  }
+
+  function renderSummary() {
+    var card = document.getElementById("summaryCard");
+    card.innerHTML = "";
+
+    var idsThisRound = state.order;
+    var correctCount = idsThisRound.filter(function (id) { return state.results[id]; }).length;
+    var allIds = QUESTIONS.map(function (q) { return q.id; });
+    var totalCorrect = allIds.filter(function (id) { return state.results[id]; }).length;
+    var wrongIds = allIds.filter(function (id) { return state.results[id] === false; });
+
+    var badge = document.createElement("div");
+    var pct = Math.round((totalCorrect / QUESTIONS.length) * 100);
+    var badgeColor = pct >= 80 ? ["#e9f7f4", "#0a5f67"] : (pct >= 50 ? ["#fff7e8", "#c9820f"] : ["#fdefee", "#b6382f"]);
+    badge.className = "summary-badge";
+    badge.style.background = badgeColor[0];
+    badge.style.color = badgeColor[1];
+    badge.textContent = state.mode === "retry" ? "재도전 결과" : (pct >= 80 ? "훌륭해요!" : pct >= 50 ? "조금만 더!" : "다시 도전해봐요");
+    card.appendChild(badge);
+
+    var scoreEl = document.createElement("div");
+    scoreEl.className = "summary-score";
+    scoreEl.innerHTML = totalCorrect * POINTS_PER_Q + '<span> / ' + TOTAL_POINTS + '점</span>';
+    card.appendChild(scoreEl);
+
+    var sub = document.createElement("div");
+    sub.className = "summary-sub";
+    sub.textContent = "총 " + QUESTIONS.length + "문항 중 " + totalCorrect + "문항 정답";
+    card.appendChild(sub);
+
+    var list = document.createElement("div");
+    list.className = "result-list";
+    allIds.forEach(function (id) {
+      var q = byId[id];
+      var ok = state.results[id];
+      var row = document.createElement("div");
+      row.className = "result-row";
+      row.innerHTML =
+        '<span class="icon ' + (ok ? "ok" : "no") + '">' + (ok ? "\u2713" : "\u2717") + '</span>' +
+        '<span class="rtext"><b>Q' + id + '.</b> ' + (ok ? "정답" : "오답") + '</span>';
+      list.appendChild(row);
+    });
+    card.appendChild(list);
+
+    var btnGroup = document.createElement("div");
+    btnGroup.className = "btn-group";
+
+    if (wrongIds.length > 0) {
+      var retryBtn = document.createElement("button");
+      retryBtn.className = "btn btn-primary";
+      retryBtn.type = "button";
+      retryBtn.textContent = "틀린 문항만 다시 풀기 (" + wrongIds.length + "개)";
+      retryBtn.addEventListener("click", function () { startRetry(wrongIds); });
+      btnGroup.appendChild(retryBtn);
+    } else {
+      var perfect = document.createElement("div");
+      perfect.style.cssText = "font-weight:800;color:#0a5f67;margin-top:6px;";
+      perfect.textContent = "\ud83c\udf89 전 문항 정답입니다!";
+      btnGroup.appendChild(perfect);
+    }
+
+    var restartBtn = document.createElement("button");
+    restartBtn.className = "btn btn-outline";
+    restartBtn.type = "button";
+    restartBtn.textContent = "처음부터 다시 풀기";
+    restartBtn.addEventListener("click", function () { startAll(); });
+    btnGroup.appendChild(restartBtn);
+
+    card.appendChild(btnGroup);
+  }
+
+  function startRetry(ids) {
+    state.order = ids.slice();
+    state.pos = 0;
+    state.mode = "retry";
+    showScreen("quiz");
+    renderQuestion();
+  }
+
+  function startAll() {
+    state.order = QUESTIONS.map(function (q) { return q.id; });
+    state.pos = 0;
+    state.results = {};
+    state.mode = "all";
+    setScoreDisplay(false);
+    showScreen("quiz");
+    renderQuestion();
+  }
+
+  // ---------------------------------------------------------------
+  // 6) 초기화
+  // ---------------------------------------------------------------
+  setScoreDisplay(false);
+  renderQuestion();
+})();
+</script>
+</body>
+</html>
