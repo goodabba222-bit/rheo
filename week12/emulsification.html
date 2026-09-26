@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>물과 기름을 하나로 | 12주차 유화 형성평가</title>
+<style>
+  :root {
+    --bg: #F4F8FB;
+    --paper: #FFFFFF;
+    --ink: #16324F;
+    --text: #1F2937;
+    --muted: #64748B;
+    --line: #DCE5EE;
+    --water: #2E8BC0;
+    --water-soft: #E3F1FA;
+    --oil: #E0962A;
+    --oil-soft: #FDF0DC;
+    --ok: #2E7D55;
+    --ok-soft: #E4F3EA;
+    --bad: #C0392B;
+    --bad-soft: #FBE9E7;
+    --radius-lg: 20px;
+    --radius-sm: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", "Noto Sans KR", system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 18px 48px; }
+
+  /* ---------- 헤더 ---------- */
+  header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 8px 0 18px; }
+  .title small { display: block; color: var(--muted); font-size: 14px; margin-bottom: 2px; }
+  .title h1 { margin: 0; font-size: clamp(24px, 6vw, 32px); line-height: 1.25; color: var(--ink); letter-spacing: -0.02em; font-weight: 800; }
+  .score {
+    flex: none; text-align: right; background: var(--paper); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 8px 14px 6px; min-width: 104px;
+  }
+  .score span { display: block; font-size: 12px; color: var(--muted); }
+  .score b { display: inline-block; font-size: 28px; line-height: 1.1; color: var(--oil); font-variant-numeric: tabular-nums; transition: transform .25s; }
+  .score b.bump { transform: scale(1.25); }
+  .score em { font-style: normal; font-size: 13px; color: var(--muted); margin-left: 2px; }
+
+  /* ---------- 진행 바: 물줄기 위에 방울 ---------- */
+  .progress { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 16px; }
+  .progress-top { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+  .progress-top strong { color: var(--ink); font-size: 15px; }
+  .drops { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 4px; height: 14px; background: var(--water-soft); border-radius: 999px; padding: 3px; }
+  .drop { border-radius: 999px; background: transparent; transition: background .3s; }
+  .drop.current { background: #B9DAEE; }
+  .drop.ok { background: var(--ok); }
+  .drop.bad { background: var(--bad); }
+  .drop.current { box-shadow: 0 0 0 2px var(--water); }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+
+  /* ---------- 문항 카드 ---------- */
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 22px 20px 20px; }
+  .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .chip { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--water-soft); color: var(--water); font-weight: 600; }
+  .chip.oil { background: var(--oil-soft); color: #9A5F0D; }
+  .chip.retry { background: var(--bad-soft); color: var(--bad); }
+  .q { font-size: clamp(18px, 4.6vw, 20px); font-weight: 700; color: var(--ink); margin: 0 0 18px; line-height: 1.55; word-break: keep-all; }
+  .q .blank { display: inline-block; min-width: 72px; border-bottom: 2px solid var(--oil); margin: 0 4px; }
+
+  .opts { display: grid; gap: 10px; }
+  .opt {
+    display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left;
+    font: inherit; color: var(--text); background: #FAFCFE; border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm); padding: 13px 14px; cursor: pointer; word-break: keep-all;
+    transition: border-color .15s, background .15s;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--water); background: var(--water-soft); }
+  .opt:focus-visible, .btn:focus-visible, input:focus-visible { outline: 3px solid #93C5E6; outline-offset: 2px; }
+  .opt .no { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; background: var(--paper); border: 1.5px solid var(--line); color: var(--muted); }
+  .opt:disabled { cursor: default; }
+  .opt.ok { border-color: var(--ok); background: var(--ok-soft); }
+  .opt.ok .no { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .opt.bad { border-color: var(--bad); background: var(--bad-soft); }
+  .opt.bad .no { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .opt.dim { opacity: .55; }
+
+  .fill { display: flex; gap: 10px; }
+  .fill input {
+    flex: 1; min-width: 0; font: inherit; font-size: 18px; padding: 12px 14px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--line); background: #FAFCFE; color: var(--text);
+  }
+  .fill input.ok { border-color: var(--ok); background: var(--ok-soft); }
+  .fill input.bad { border-color: var(--bad); background: var(--bad-soft); }
+  .hint { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+  .feedback { margin-top: 16px; border-radius: var(--radius-sm); padding: 14px 16px; display: none; }
+  .feedback.show { display: block; animation: rise .25s ease-out; }
+  .feedback.ok { background: var(--ok-soft); }
+  .feedback.bad { background: var(--bad-soft); }
+  .feedback .verdict { font-weight: 800; font-size: 17px; }
+  .feedback.ok .verdict { color: var(--ok); }
+  .feedback.bad .verdict { color: var(--bad); }
+  .feedback p { margin: 4px 0 0; font-size: 15.5px; word-break: keep-all; }
+  .feedback .trap { margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(0,0,0,.15); color: #7A2A20; font-size: 14.5px; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+  .btn {
+    font: inherit; font-weight: 700; font-size: 16px; border: none; border-radius: var(--radius-sm);
+    padding: 12px 20px; cursor: pointer; background: var(--ink); color: #fff;
+  }
+  .btn.secondary { background: var(--paper); color: var(--ink); border: 1.5px solid var(--line); }
+  .btn.oil { background: var(--oil); color: #fff; }
+  .btn:disabled { opacity: .4; cursor: default; }
+
+  /* ---------- 결과 화면 ---------- */
+  .result h2 { margin: 0 0 4px; font-size: 24px; color: var(--ink); }
+  .result .lead { color: var(--muted); margin: 0 0 18px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+  .stat { background: #FAFCFE; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
+  .stat b { display: block; font-size: 26px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 13px; color: var(--muted); }
+  .review { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .review li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: #FAFCFE; border: 1px solid var(--line); font-size: 15px; word-break: keep-all; }
+  .review .mark { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 800; color: #fff; }
+  .review .mark.ok { background: var(--ok); }
+  .review .mark.bad { background: var(--bad); }
+  .review small { display: block; color: var(--muted); font-size: 13px; }
+  .note { font-size: 13px; color: var(--muted); margin-top: 14px; }
+
+  footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 22px; }
+
+  @media (max-width: 420px) {
+    body { font-size: 16px; }
+    .wrap { padding: 14px 12px 40px; }
+    .card { padding: 18px 14px 16px; }
+    .score { min-width: 88px; padding: 6px 10px 4px; }
+    .score b { font-size: 24px; }
+    .fill { flex-direction: column; }
+    .actions .btn { flex: 1; }
+    .stats { gap: 6px; }
+    .result .actions { flex-direction: column-reverse; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">
+      <small>제품 및 소재 물성 실습 · 12주차</small>
+      <h1>물과 기름을 하나로<br>유화 퀴즈 15</h1>
+    </div>
+    <div class="score" aria-live="polite">
+      <span>포인트</span>
+      <b id="points">0</b><em>점</em>
+    </div>
+  </header>
+
+  <section class="progress" aria-label="진행 상황">
+    <div class="progress-top"><strong id="progressText">1 / 15번째 문항</strong><span id="correctText">맞힌 문항 0</span></div>
+    <div class="drops" id="drops"></div>
+    <div class="legend"><span><i style="background:var(--ok)"></i>정답</span><span><i style="background:var(--bad)"></i>오답</span><span><i style="background:#B9DAEE"></i>지금 푸는 문항</span></div>
+  </section>
+
+  <main class="card" id="card"></main>
+
+  <footer>첫 시도 정답 +10점 · 다시 풀기에서 정답 +5점</footer>
+</div>
+
+<script>
+const QUIZ = [
+  { type: 'mc', topic: '유화의 종류', q: '다음 중 O/W형(Oil in Water) 에멀전에 해당하는 것은?',
+    opts: ['마요네즈', '버터', '마가린', '기름 속에 물방울이 분산된 유화액'], ans: 0,
+    why: 'O/W형은 물 속에 기름방울이 흩어진 것으로, 우유·아이스크림·마요네즈가 대표적이에요.',
+    trap: [1, '버터는 우유로 만들어서 O/W로 착각하기 쉽지만, 기름 속에 물방울이 있는 W/O형이에요.'] },
+  { type: 'mc', topic: '유화 형태 구별', q: '유화 상태(O/W, W/O)를 구별하는 방법에 대한 설명으로 옳은 것은?',
+    opts: ['물을 메틸오렌지로 염색했을 때 방울이 색을 띠면 O/W형이다', '유화액에 전기가 잘 통하면 W/O형이다', '유화액을 물속에 떨어뜨렸을 때 잘 퍼지면 O/W형이다', '유용성(기름에 녹는) 유화제를 쓰면 O/W형이 되기 쉽다'], ans: 2,
+    why: 'O/W는 바깥(연속상)이 물이라, 물속에 떨어뜨리면 잘 퍼져 섞여요.',
+    trap: [0, '물을 염색했으니 물이 바깥인 O/W는 "바탕"이 색을 띠어요. 방울과 바탕을 거꾸로 연결하기 쉬워요.'] },
+  { type: 'mc', topic: '계면활성제', q: '계면활성제(성냥개비 모델)에 대한 설명으로 옳지 않은 것은?',
+    opts: ['한 분자 안에 친수성 부분과 친유성 부분을 반드시 둘 다 가진다', 'O/W의 기름방울 표면에서 꼬리는 물 쪽, 머리는 기름 쪽을 향해 배열된다', '물과 기름 사이에 끼어들어 계면장력을 낮춘다', '친유성 꼬리는 긴 탄화수소 사슬로 물에 잘 녹지 않는다'], ans: 1,
+    why: '꼬리(친유성)는 기름 안쪽, 머리(친수성)는 물 쪽을 향해요. ②는 방향이 반대예요.',
+    trap: [0, '"반드시"라는 강한 표현 때문에 틀린 문장처럼 보이지만, 두 부분을 모두 갖는 것이 계면활성제의 정의예요.'] },
+  { type: 'mc', topic: '유화제 분류', q: '물에 녹았을 때 전하를 띠지 않아 pH의 영향을 받지 않으며, Span과 Tween이 속하는 유화제는?',
+    opts: ['음이온 유화제', '양이온 유화제', '양쪽성 유화제', '비이온 유화제'], ans: 3,
+    why: '비이온 유화제는 전하가 없어 pH에 영향을 받지 않고, Span·Tween이 여기에 속해요.',
+    trap: [0, '세제나 SDS처럼 흔한 계면활성제가 음이온이라서 "계면활성제 = 음이온"으로 떠올리기 쉬워요.'] },
+  { type: 'mc', topic: 'HLB 계산', q: 'Griffin 법으로 계산할 때, 친수기 부분의 분자량이 전체 분자량의 40%인 비이온 유화제의 HLB 값은?',
+    opts: ['4', '8', '12', '16'], ans: 1,
+    why: 'HLB = 20 × 0.4 = 8 (친수기 비율 40% ÷ 5 = 8로도 구할 수 있어요).',
+    trap: [2, '친수기 대신 친유기 비율(60%)을 넣으면 20 × 0.6 = 12가 나와요.'] },
+  { type: 'mc', topic: 'HLB 선택', q: '보습크림과 같은 O/W 에멀전을 만들 때 선택해야 하는 유화제(조합)의 HLB 범위로 가장 적절한 것은?',
+    opts: ['8~18', '3~6', '7~9', '1~3'], ans: 0,
+    why: 'O/W 유화제는 HLB 8~18 범위로, 물을 좋아하는 쪽이 바깥이 되게 해 줘요.',
+    trap: [1, '3~6은 W/O 유화제 범위예요. O/W와 W/O를 거꾸로 기억하면 고르기 쉬워요.'] },
+  { type: 'mc', topic: 'HLB의 한계', q: 'HLB 값의 한계에 대한 설명으로 옳지 않은 것은?',
+    opts: ['HLB가 같아도 유화제 1개와 2개 이상 섞은 것의 실제 유화력은 다를 수 있다', '유화제 농도, 물:기름 비율, 유화 온도의 영향은 반영되지 않는다', '유화 이외의 용도에서는 HLB와 관계없는 경우도 많다', '혼합 HLB가 목표 HLB와 일치하면 실험 없이도 유화 안정성이 보장된다'], ans: 3,
+    why: 'HLB는 "출발점(기준 하나)"일 뿐이에요. 실제 안정성은 반드시 실험으로 확인해야 해요.',
+    trap: [0, '"HLB가 같으면 결과도 같다"고 생각하면 ①을 틀린 설명으로 오해하기 쉬워요.'] },
+  { type: 'mc', topic: '스토크스 식', q: '스토크스 식에 따르면, 다른 조건이 모두 같을 때 기름방울의 지름(d)을 절반으로 줄이면 크리밍 속도는 어떻게 되는가?',
+    opts: ['2배로 빨라진다', '1/2로 느려진다', '1/4로 느려진다', '변화 없다'], ans: 2,
+    why: '크리밍 속도는 지름의 제곱(d²)에 비례해서 (1/2)² = 1/4이 돼요.',
+    trap: [1, '식에서 d가 "제곱"으로 들어간다는 점을 놓치면 1/2로 계산하게 돼요.'] },
+  { type: 'mc', topic: '유화 안정화', q: '유화를 안정하게 만드는 방법으로 옳지 않은 것은?',
+    opts: ['연속상(바깥)의 점도를 낮춘다', '두 상의 비중 차이를 줄인다', '방울 표면에 전기층을 만든다', '방울 표면에 튼튼한 보호막을 만든다'], ans: 0,
+    why: '연속상의 점도는 "높여야" 방울이 잘 못 움직여서 안정해져요.',
+    trap: [2, '전기층이 있으면 같은 전하끼리 밀어내서 방울이 뭉치지 않아요. 이 원리를 모르면 이 보기를 고르기 쉬워요.'] },
+  { type: 'mc', topic: 'HLB 배합 계산', q: 'Tween 60(HLB 14.9) 3.0%, Span 60(HLB 4.7) 1.0%, 글리세릴스테아레이트(HLB 3.8) 1.0%를 섞은 유화제 혼합물의 HLB는?',
+    opts: ['7.80', '10.64', '23.40', '53.20'], ans: 1,
+    why: '비율 0.6 : 0.2 : 0.2로 가중평균 → 14.9×0.6 + 4.7×0.2 + 3.8×0.2 = 8.94 + 0.94 + 0.76 = 10.64',
+    trap: [0, '배합량을 무시하고 세 HLB를 단순 평균하면 (14.9 + 4.7 + 3.8) ÷ 3 = 7.80이 나와요.'] },
+  { type: 'fill', topic: '계면장력', q: '물과 기름처럼 섞이지 않는 두 액체의 경계면에서 작용하여, 두 층으로 갈라지게 하는 힘을 ___ 이라 한다.',
+    accept: ['계면장력', '계면장력이다'], show: '계면장력',
+    why: '두 액체 사이 경계면(계면)에서 작용하는 힘이 계면장력이고, 유화에서 가장 중요한 힘이에요.',
+    trap: [['표면장력'], '표면장력은 물과 "공기" 사이의 힘이에요. 두 액체 사이의 힘은 계면장력이에요.'] },
+  { type: 'fill', topic: 'HLB 기본', q: '친수기가 전혀 없는 파라핀의 HLB는 0이고, 친유기가 전혀 없는 폴리에틸렌글리콜(PEG)의 HLB는 ___ 이다.',
+    accept: ['20'], show: '20', numeric: true,
+    why: 'HLB는 0(기름을 좋아함)부터 20(물을 좋아함)까지의 점수예요. 친수기 100%면 20이에요.',
+    trap: [['100'], '"친수기 100%"를 그대로 적으면 안 돼요. HLB의 최댓값은 20이에요.'] },
+  { type: 'fill', topic: '유화 방법', q: '기름과 유화제에 물을 조금씩 넣어 먼저 W/O를 만든 뒤, 물을 계속 넣으면 어느 순간 O/W로 뒤집히며 점도가 급격히 낮아진다. 이 원리를 이용한 유화 방법을 ___ 유화법이라 한다.',
+    accept: ['전상', '전상유화법', '전상유화', '전상법'], show: '전상',
+    why: '"상(相)이 뒤바뀐다"는 뜻이에요. W/O → O/W 반전을 이용해 아주 작은 기름방울을 만들어요.',
+    trap: [['단순', '단순유화법', '단순유화'], '단순 유화법에는 "뒤집힘" 과정이 없어요. W/O → O/W로 바뀌는 것이 전상 유화법의 핵심이에요.'] },
+  { type: 'fill', topic: '안정성 측정', q: '유화액을 가온하거나 원심분리기를 사용해 억지로 분리를 일으켜, 짧은 시간에 유화안정성을 평가하는 방법을 ___ 법이라 한다.',
+    accept: ['강제분리', '강제분리법'], show: '강제분리',
+    why: '"억지로 빨리 깨 보는" 방법이 강제분리법이에요. 결과가 실제 제품 안정성과 맞는지 확인이 필요해요.',
+    trap: [['정치분리', '정치분리법'], '정치분리법은 일정 온도에서 "가만히 두고" 지켜보는 방법이에요.'] },
+  { type: 'fill', topic: 'HLB 배합 계산', q: 'Span 60(HLB 4.7)과 Tween 60(HLB 14.9)을 섞어 목표 HLB 11.84를 만들려고 한다. 총 유화제를 4.0% 사용할 때 Span 60은 1.2%이고, Tween 60은 ___ %를 넣어야 한다.',
+    accept: ['2.8', '2.80'], show: '2.8', numeric: true,
+    why: 'f = (11.84 − 4.7) ÷ (14.9 − 4.7) = 0.70 → Tween 60 = 0.70 × 4.0 = 2.8%',
+    trap: [['0.7', '0.70', '70'], '비율 f(0.70 = 70%)만 구하고 총 유화제 4.0%를 곱하지 않은 값이에요.'] },
+];
+const NUMS = ['①', '②', '③', '④'];
+
+const state = {
+  queue: [...QUIZ.keys()],   // 이번 회차에 풀 문항 번호들
+  pos: 0,
+  points: 0,
+  status: Array(QUIZ.length).fill(null), // 'ok' | 'bad' | null (문항별 최신 결과)
+  retry: false,
+  answered: false,
+};
+
+const $ = id => document.getElementById(id);
+const card = $('card');
+const norm = s => s.replace(/\s+/g, '').replace(/[%()（）]/g, '').toLowerCase();
+
+function renderProgress() {
+  const drops = $('drops');
+  drops.style.setProperty('--n', QUIZ.length);
+  drops.innerHTML = '';
+  const current = state.queue[state.pos];
+  QUIZ.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'drop' + (state.status[i] ? ' ' + state.status[i] : '') + (i === current && !state.answered && state.pos < state.queue.length ? ' current' : '');
+    drops.appendChild(d);
+  });
+  const total = state.queue.length;
+  const n = Math.min(state.pos + 1, total);
+  $('progressText').textContent = state.retry ? `다시 풀기 ${n} / ${total}` : `${n} / ${total}번째 문항`;
+  $('correctText').textContent = `맞힌 문항 ${state.status.filter(s => s === 'ok').length} / ${QUIZ.length}`;
+}
+
+function addPoints(p) {
+  state.points += p;
+  const el = $('points');
+  el.textContent = state.points;
+  el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  setTimeout(() => el.classList.remove('bump'), 260);
+}
+
+function renderQuestion() {
+  state.answered = false;
+  const idx = state.queue[state.pos];
+  const item = QUIZ[idx];
+  const qHtml = item.q.replace('___', '<span class="blank" aria-label="빈칸"></span>');
+  card.innerHTML = `
+    <div class="meta">
+      <span class="chip">${idx + 1}번 · ${item.type === 'mc' ? '객관식' : '괄호넣기'}</span>
+      <span class="chip oil">${item.topic}</span>
+      ${state.retry ? '<span class="chip retry">다시 풀기</span>' : ''}
+    </div>
+    <p class="q">${qHtml}</p>
+    <div id="answerArea"></div>
+    <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+    <div class="actions"><button class="btn" id="nextBtn" disabled>${state.pos + 1 < state.queue.length ? '다음 문항' : '결과 보기'}</button></div>`;
+  const area = $('answerArea');
+  if (item.type === 'mc') {
+    area.className = 'opts';
+    item.opts.forEach((o, j) => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.innerHTML = `<span class="no">${j + 1}</span><span>${o}</span>`;
+      b.addEventListener('click', () => answerMC(j));
+      area.appendChild(b);
+    });
+  } else {
+    area.innerHTML = `
+      <div class="fill">
+        <input id="fillInput" type="text" inputmode="${item.numeric ? 'decimal' : 'text'}" autocomplete="off" placeholder="빈칸에 들어갈 말을 쓰세요" aria-label="답 입력">
+        <button class="btn oil" id="checkBtn">확인</button>
+      </div>
+      <div class="hint">${item.numeric ? '숫자만 입력해도 돼요.' : '띄어쓰기는 채점에 영향을 주지 않아요.'} Enter 키로도 확인할 수 있어요.</div>`;
+    const input = $('fillInput');
+    $('checkBtn').addEventListener('click', answerFill);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); state.answered ? next() : answerFill(); } });
+    setTimeout(() => input.focus({ preventScroll: true }), 50);
+  }
+  $('nextBtn').addEventListener('click', next);
+  renderProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showFeedback(correct, item, trapHit) {
+  const fb = $('feedback');
+  fb.className = 'feedback show ' + (correct ? 'ok' : 'bad');
+  const answerText = item.type === 'mc' ? `${NUMS[item.ans]} ${item.opts[item.ans]}` : item.show;
+  fb.innerHTML = `
+    <div class="verdict">${correct ? '정답이에요!' : '아쉬워요. 정답은 ' + answerText}</div>
+    <p>${item.why}</p>
+    ${!correct && trapHit ? `<p class="trap">많이 헷갈리는 답이에요 — ${item.trap[1]}</p>` : ''}`;
+}
+
+function settle(correct) {
+  const idx = state.queue[state.pos];
+  state.answered = true;
+  state.status[idx] = correct ? 'ok' : 'bad';
+  if (correct) addPoints(state.retry ? 5 : 10);
+  const nb = $('nextBtn');
+  nb.disabled = false;
+  renderProgress();
+  nb.focus({ preventScroll: true });
+}
+
+function answerMC(j) {
+  if (state.answered) return;
+  const item = QUIZ[state.queue[state.pos]];
+  const correct = j === item.ans;
+  [...document.querySelectorAll('.opt')].forEach((b, k) => {
+    b.disabled = true;
+    if (k === item.ans) b.classList.add('ok');
+    else if (k === j) b.classList.add('bad');
+    else b.classList.add('dim');
+  });
+  showFeedback(correct, item, j === item.trap[0]);
+  settle(correct);
+}
+
+function answerFill() {
+  if (state.answered) return;
+  const item = QUIZ[state.queue[state.pos]];
+  const input = $('fillInput');
+  const raw = input.value.trim();
+  if (!raw) { input.focus(); input.placeholder = '답을 입력한 뒤 확인을 누르세요'; return; }
+  let v = norm(raw);
+  let correct = item.accept.some(a => norm(a) === v);
+  if (!correct && item.numeric) {
+    const num = parseFloat(v.replace(/[^0-9.\-]/g, ''));
+    correct = item.accept.some(a => Math.abs(parseFloat(a) - num) < 1e-9);
+  }
+  const trapHit = item.trap[0].some(t => norm(t) === v);
+  input.disabled = true;
+  input.classList.add(correct ? 'ok' : 'bad');
+  $('checkBtn').disabled = true;
+  showFeedback(correct, item, trapHit);
+  settle(correct);
+}
+
+function next() {
+  if (!state.answered) return;
+  state.pos++;
+  if (state.pos < state.queue.length) renderQuestion();
+  else renderResult();
+}
+
+function renderResult() {
+  const okCount = state.status.filter(s => s === 'ok').length;
+  const wrong = state.status.map((s, i) => s === 'bad' ? i : -1).filter(i => i >= 0);
+  const msg = okCount === QUIZ.length ? '모든 문항을 맞혔어요. 보습크림 만들 준비 완료!'
+            : okCount >= 11 ? '핵심 개념을 잘 잡았어요. 틀린 문항만 다시 확인해 보세요.'
+            : '틀린 문항을 다시 풀면서 개념을 한 번 더 정리해 보세요.';
+  card.innerHTML = `
+    <div class="result">
+      <h2>${state.retry ? '다시 풀기 결과' : '퀴즈 완료'}</h2>
+      <p class="lead">${msg}</p>
+      <div class="stats">
+        <div class="stat"><b>${state.points}</b><span>포인트</span></div>
+        <div class="stat"><b>${okCount}</b><span>맞힌 문항</span></div>
+        <div class="stat"><b>${wrong.length}</b><span>틀린 문항</span></div>
+      </div>
+      <ul class="review">
+        ${QUIZ.map((it, i) => `
+          <li><span class="mark ${state.status[i]}">${state.status[i] === 'ok' ? '○' : '✕'}</span>
+            <span>${i + 1}. ${it.topic}<small>정답: ${it.type === 'mc' ? NUMS[it.ans] + ' ' + it.opts[it.ans] : it.show}</small></span></li>`).join('')}
+      </ul>
+      <div class="actions">
+        <button class="btn secondary" id="restartBtn">처음부터 다시</button>
+        ${wrong.length ? `<button class="btn oil" id="retryBtn">틀린 문항만 다시 풀기 (${wrong.length}개)</button>` : ''}
+      </div>
+      <p class="note">다시 풀기에서 맞히면 +5점씩 더해져요.</p>
+    </div>`;
+  state.pos = state.queue.length;
+  renderProgress();
+  $('progressText').textContent = '결과';
+  $('restartBtn').addEventListener('click', restart);
+  if (wrong.length) $('retryBtn').addEventListener('click', () => startRetry(wrong));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function startRetry(wrong) {
+  state.queue = wrong;
+  state.pos = 0;
+  state.retry = true;
+  renderQuestion();
+}
+
+function restart() {
+  state.queue = [...QUIZ.keys()];
+  state.pos = 0;
+  state.points = 0;
+  state.status = Array(QUIZ.length).fill(null);
+  state.retry = false;
+  $('points').textContent = '0';
+  renderQuestion();
+}
+
+// 키보드: 1~4로 보기 선택, Enter로 다음
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const item = QUIZ[state.queue[state.pos]];
+  if (!item) return;
+  if (item.type === 'mc' && !state.answered && ['1', '2', '3', '4'].includes(e.key)) answerMC(Number(e.key) - 1);
+  else if (e.key === 'Enter' && state.answered && document.activeElement?.id !== 'nextBtn') next();
+});
+
+renderQuestion();
+</script>
+</body>
+</html>
